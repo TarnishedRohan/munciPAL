@@ -1,0 +1,2005 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>munciPAL — Report a Civic Issue</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      :root {
+        --asphalt: #122b2e;
+        --asphalt-2: #1b3b3e;
+        --concrete: #eef3f0;
+        --concrete-2: #dfe9e2;
+        --paper: #fafcfa;
+        --orange: #0e7c86;
+        --orange-dark: #0b616a;
+        --orange-glow: #e1f2f1;
+        --yellow: #d9a404;
+        --yellow-glow: #fbf1d6;
+        --green: #2e8b57;
+        --green-glow: #e3f3e9;
+        --red: #c1442d;
+        --red-glow: #fae3dd;
+        --slate: #647069;
+        --line: #d3ded6;
+        --white: #ffffff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      html,
+      body {
+        background: var(--concrete);
+        color: var(--asphalt);
+        font-family: "Inter", sans-serif;
+      }
+      h1,
+      h2,
+      h3,
+      .display {
+        font-family: "Oswald", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+      a {
+        color: inherit;
+      }
+      button {
+        font-family: inherit;
+        cursor: pointer;
+      }
+      ::selection {
+        background: var(--orange);
+        color: var(--white);
+      }
+
+      .hazard-strip {
+        height: 8px;
+        background: repeating-linear-gradient(
+          135deg,
+          var(--asphalt) 0 14px,
+          var(--yellow) 14px 28px
+        );
+      }
+
+      /* ---------- header ---------- */
+      header {
+        background: var(--asphalt);
+        background-image:
+          radial-gradient(
+            ellipse 500px 200px at 15% 0%,
+            rgba(14, 124, 134, 0.22),
+            transparent 70%
+          ),
+          radial-gradient(
+            ellipse 400px 200px at 90% 100%,
+            rgba(217, 164, 4, 0.1),
+            transparent 70%
+          );
+        color: var(--concrete);
+        padding: 18px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        border-bottom: 1px solid #33383f;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+      }
+      .brand-text .display {
+        font-size: 20px;
+        color: var(--white);
+        margin: 0;
+        line-height: 1;
+        text-transform: none;
+      }
+      .brand-text .sub {
+        font-size: 11px;
+        color: #9ba1a9;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-top: 3px;
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 13px;
+        color: #c7cdd4;
+      }
+      .header-actions .divider {
+        width: 1px;
+        height: 14px;
+        background: #454b53;
+      }
+      .header-actions .count {
+        white-space: nowrap;
+      }
+
+      .auth-btn {
+        background: var(--orange);
+        color: var(--white);
+        border: none;
+        border-radius: 20px;
+        padding: 9px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        transition:
+          background 0.15s ease,
+          transform 0.15s ease;
+      }
+      .auth-btn:hover {
+        background: var(--orange-dark);
+        transform: translateY(-1px);
+      }
+
+      .user-chip {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        background: #2b2f36;
+        border: 1px solid #3b404a;
+        padding: 5px 14px 5px 5px;
+        border-radius: 22px;
+      }
+      .user-chip .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--orange);
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        flex-shrink: 0;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .user-chip .name {
+        font-size: 13px;
+        color: var(--white);
+        font-weight: 500;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .user-chip button {
+        background: none;
+        border: none;
+        color: #8b929b;
+        font-size: 11px;
+        text-decoration: underline;
+        padding: 0;
+      }
+      .user-chip button:hover {
+        color: var(--white);
+      }
+
+      /* ---------- hero ---------- */
+      .hero {
+        padding: 68px 28px 40px;
+        max-width: 1180px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 56px;
+        align-items: start;
+      }
+      @media (max-width: 900px) {
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 40px;
+          padding-top: 44px;
+        }
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: var(--orange-dark);
+        background: var(--orange-glow);
+        padding: 5px 10px;
+        border-radius: 2px;
+        border: 1px solid #f2cbae;
+        margin-bottom: 18px;
+      }
+      .eyebrow::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        background: var(--orange);
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse 2s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
+
+      .hero h1 {
+        font-size: 54px;
+        line-height: 1.03;
+        margin: 0 0 20px;
+        color: var(--asphalt);
+      }
+      .hero h1 span {
+        color: var(--orange);
+        position: relative;
+        white-space: nowrap;
+      }
+
+      .hero p.lede {
+        font-size: 17px;
+        line-height: 1.65;
+        color: #4b4f55;
+        max-width: 48ch;
+        margin: 0 0 30px;
+      }
+
+      .road-art {
+        width: 100%;
+        max-width: 420px;
+        height: auto;
+        margin-bottom: 8px;
+      }
+
+      .stat-row {
+        display: flex;
+        gap: 0;
+        border-top: 1px solid var(--line);
+        margin-top: 8px;
+      }
+      .stat {
+        flex: 1;
+        padding: 16px 18px 0;
+        border-right: 1px solid var(--line);
+      }
+      .stat:last-child {
+        border-right: none;
+      }
+      .stat .num {
+        font-family: "Oswald", sans-serif;
+        font-size: 30px;
+        color: var(--asphalt);
+        line-height: 1;
+      }
+      .stat .lbl {
+        font-size: 11.5px;
+        color: var(--slate);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-top: 6px;
+      }
+
+      /* ---------- ticket card (signature form element) ---------- */
+      .ticket-wrap {
+        position: relative;
+      }
+      .ticket {
+        background: var(--paper);
+        border: 1px solid var(--asphalt);
+        position: relative;
+        padding: 28px 26px 24px;
+        box-shadow: 7px 7px 0 var(--asphalt-2);
+      }
+      .ticket::before,
+      .ticket::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 14px;
+        background:
+          radial-gradient(
+              circle 7px at 0 50%,
+              transparent 6px,
+              var(--concrete) 7px
+            )
+            left/16px 14px repeat-x,
+          radial-gradient(
+              circle 7px at 100% 50%,
+              transparent 6px,
+              var(--concrete) 7px
+            )
+            right/16px 14px repeat-x;
+      }
+      .ticket::before {
+        top: -1px;
+      }
+      .ticket::after {
+        bottom: -1px;
+      }
+      .ticket .form-title {
+        font-size: 13px;
+        color: var(--slate);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      .ticket .form-title .id-tag {
+        font-family: "JetBrains Mono", monospace;
+        color: var(--orange-dark);
+      }
+
+      .field {
+        margin-bottom: 16px;
+      }
+      .field label {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--asphalt);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .field .hint {
+        font-size: 11.5px;
+        color: var(--slate);
+        margin-top: 5px;
+      }
+      .field input[type="text"],
+      .field input[type="email"],
+      .field textarea,
+      .field select {
+        width: 100%;
+        padding: 10px 11px;
+        border: 1px solid #c9c2af;
+        background: var(--white);
+        font-family: "Inter", sans-serif;
+        font-size: 14px;
+        color: var(--asphalt);
+        border-radius: 5px;
+        transition:
+          border-color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      .field input:focus,
+      .field textarea:focus,
+      .field select:focus {
+        outline: none;
+        border-color: var(--orange);
+        box-shadow: 0 0 0 3px var(--orange-glow);
+      }
+      .field textarea {
+        resize: vertical;
+        min-height: 78px;
+      }
+
+      .cat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      @media (max-width: 520px) {
+        .cat-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      .cat-btn {
+        border: 1px solid #c9c2af;
+        background: var(--white);
+        border-radius: 6px;
+        padding: 10px 4px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        font-size: 10.5px;
+        color: var(--asphalt);
+        text-align: center;
+        line-height: 1.15;
+        transition: all 0.15s ease;
+      }
+      .cat-btn:hover {
+        border-color: var(--orange);
+        transform: translateY(-1px);
+      }
+      .cat-btn svg {
+        width: 20px;
+        height: 20px;
+        stroke: var(--asphalt);
+      }
+      .cat-btn.active {
+        border-color: var(--orange);
+        background: var(--orange-glow);
+        box-shadow: 0 0 0 3px var(--orange-glow);
+      }
+      .cat-btn.active svg {
+        stroke: var(--orange-dark);
+      }
+
+      .sev-row {
+        display: flex;
+        gap: 8px;
+      }
+      .sev-btn {
+        flex: 1;
+        padding: 9px 4px;
+        border: 1px solid #c9c2af;
+        background: var(--white);
+        border-radius: 5px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--slate);
+        transition: all 0.15s ease;
+      }
+      .sev-btn[data-sev="Low"].active {
+        background: var(--yellow-glow);
+        border-color: var(--yellow);
+        color: #7a5b00;
+      }
+      .sev-btn[data-sev="Medium"].active {
+        background: var(--orange-glow);
+        border-color: var(--orange);
+        color: var(--orange-dark);
+      }
+      .sev-btn[data-sev="High"].active {
+        background: var(--red-glow);
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .sev-btn[data-sev="Urgent"].active {
+        background: var(--asphalt);
+        border-color: var(--asphalt);
+        color: var(--white);
+      }
+
+      .photo-drop {
+        border: 1.5px dashed #c9c2af;
+        border-radius: 6px;
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        background: var(--white);
+        transition: border-color 0.15s ease;
+      }
+      .photo-drop:hover {
+        border-color: var(--orange);
+      }
+      .photo-drop .icon {
+        width: 22px;
+        height: 22px;
+        stroke: var(--slate);
+        margin: 0 auto 6px;
+        display: block;
+      }
+      .photo-drop .txt {
+        font-size: 12.5px;
+        color: var(--slate);
+      }
+      .photo-preview {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .photo-preview img {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border: 1px solid var(--asphalt);
+        border-radius: 5px;
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 13px;
+        background: var(--orange);
+        color: var(--white);
+        border: none;
+        border-radius: 5px;
+        font-family: "Oswald", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 15px;
+        margin-top: 6px;
+        transition:
+          background 0.15s ease,
+          transform 0.1s ease;
+      }
+      .submit-btn:hover:not(:disabled) {
+        background: var(--orange-dark);
+        transform: translateY(-1px);
+      }
+      .submit-btn:disabled {
+        background: #c9c2af;
+        cursor: not-allowed;
+      }
+
+      .stamp {
+        position: absolute;
+        top: 60px;
+        right: 26px;
+        border: 3px solid var(--green);
+        color: var(--green);
+        font-family: "Oswald", sans-serif;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        padding: 5px 10px;
+        transform: rotate(-8deg);
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        pointer-events: none;
+      }
+      .stamp.show {
+        opacity: 1;
+      }
+
+      /* ---------- route divider ---------- */
+      .route-divider {
+        max-width: 1180px;
+        margin: 8px auto 0;
+        padding: 0 28px;
+      }
+      .route-divider svg {
+        width: 100%;
+        height: 24px;
+        display: block;
+      }
+
+      /* ---------- ledger section ---------- */
+      .ledger {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 36px 28px 80px;
+      }
+      .ledger-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+        border-bottom: 2px solid var(--asphalt);
+        padding-bottom: 14px;
+        margin-bottom: 22px;
+      }
+      .ledger-head h2 {
+        font-size: 26px;
+        margin: 0;
+      }
+      .filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .filter-btn {
+        padding: 7px 14px;
+        border: 1px solid #c9c2af;
+        background: var(--paper);
+        border-radius: 20px;
+        font-size: 12.5px;
+        color: var(--slate);
+        font-weight: 600;
+        transition: all 0.15s ease;
+      }
+      .filter-btn:hover {
+        border-color: var(--orange);
+        color: var(--orange-dark);
+      }
+      .filter-btn.active {
+        background: var(--asphalt);
+        color: var(--white);
+        border-color: var(--asphalt);
+      }
+
+      .empty-state {
+        border: 1.5px dashed var(--line);
+        border-radius: 8px;
+        padding: 48px 20px;
+        text-align: center;
+        color: var(--slate);
+      }
+      .empty-state svg {
+        width: 34px;
+        height: 34px;
+        stroke: var(--slate);
+        margin-bottom: 10px;
+      }
+      .empty-state .t {
+        font-family: "Oswald", sans-serif;
+        font-size: 16px;
+        color: var(--asphalt);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+
+      .tickets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 18px;
+      }
+      .ticket-card {
+        background: var(--paper);
+        border: 1px solid var(--asphalt);
+        border-radius: 6px;
+        padding: 16px 16px 14px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      .ticket-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 4px 5px 0 var(--concrete-2);
+      }
+      .tc-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .tc-id {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--slate);
+      }
+      .tc-cat {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .tc-cat svg {
+        width: 16px;
+        height: 16px;
+        stroke: var(--orange-dark);
+        flex-shrink: 0;
+      }
+      .badge {
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 3px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+      }
+      .badge.Submitted {
+        background: var(--concrete-2);
+        color: #5c5546;
+      }
+      .badge.InReview {
+        background: var(--yellow-glow);
+        color: #7a5b00;
+      }
+      .badge.Resolved {
+        background: var(--green-glow);
+        color: var(--green);
+      }
+      .tc-loc {
+        font-size: 12.5px;
+        color: var(--slate);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .tc-loc svg {
+        width: 13px;
+        height: 13px;
+        stroke: var(--slate);
+        flex-shrink: 0;
+      }
+      .tc-desc {
+        font-size: 13px;
+        color: #3e4145;
+        line-height: 1.45;
+      }
+      .tc-photo {
+        width: 100%;
+        height: 130px;
+        object-fit: cover;
+        border-radius: 5px;
+        border: 1px solid var(--line);
+      }
+      .tc-author {
+        font-size: 11px;
+        color: var(--slate);
+      }
+      .tc-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px dashed var(--line);
+      }
+      .tc-sev {
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .tc-sev.Low {
+        color: #7a5b00;
+      }
+      .tc-sev.Medium {
+        color: var(--orange-dark);
+      }
+      .tc-sev.High {
+        color: var(--red);
+      }
+      .tc-sev.Urgent {
+        color: var(--asphalt);
+      }
+      .tc-date {
+        font-size: 11px;
+        color: var(--slate);
+      }
+      .tc-actions {
+        display: flex;
+        gap: 6px;
+      }
+      .tc-actions button {
+        font-size: 11px;
+        font-weight: 600;
+        background: none;
+        border: 1px solid #c9c2af;
+        border-radius: 5px;
+        padding: 5px 9px;
+        color: var(--slate);
+        transition: all 0.15s ease;
+      }
+      .tc-actions button.resolve:hover {
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .tc-actions button.withdraw:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+
+      /* ---------- reviews ---------- */
+      .reviews-block {
+        border-top: 1px dashed var(--line);
+        padding-top: 10px;
+        margin-top: 2px;
+      }
+      .reviews-summary {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--slate);
+        margin-bottom: 8px;
+      }
+      .stars {
+        display: inline-flex;
+        gap: 1px;
+      }
+      .stars svg {
+        width: 13px;
+        height: 13px;
+      }
+      .star-fill {
+        fill: var(--yellow);
+        stroke: var(--yellow);
+      }
+      .star-empty {
+        fill: none;
+        stroke: #c9c2af;
+      }
+      .review-item {
+        background: var(--concrete);
+        border-radius: 5px;
+        padding: 8px 10px;
+        margin-bottom: 6px;
+      }
+      .review-item .rv-head {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 3px;
+      }
+      .review-item .rv-avatar {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--slate);
+        color: var(--white);
+        font-size: 9px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "JetBrains Mono", monospace;
+        flex-shrink: 0;
+      }
+      .review-item .rv-name {
+        font-size: 11.5px;
+        font-weight: 600;
+      }
+      .review-item .rv-time {
+        font-size: 10px;
+        color: var(--slate);
+        margin-left: auto;
+      }
+      .review-item .rv-comment {
+        font-size: 12px;
+        color: #3e4145;
+        line-height: 1.4;
+      }
+      .review-form {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .star-input {
+        display: flex;
+        gap: 3px;
+      }
+      .star-input button {
+        background: none;
+        border: none;
+        padding: 2px;
+      }
+      .star-input svg {
+        width: 19px;
+        height: 19px;
+        transition: transform 0.1s ease;
+      }
+      .star-input button:hover svg {
+        transform: scale(1.15);
+      }
+      .review-form textarea {
+        font-size: 12px;
+        padding: 7px 8px;
+        border: 1px solid #c9c2af;
+        border-radius: 5px;
+        min-height: 50px;
+        font-family: "Inter", sans-serif;
+      }
+      .review-form .rv-submit {
+        align-self: flex-start;
+        background: var(--asphalt);
+        color: var(--white);
+        border: none;
+        border-radius: 5px;
+        padding: 6px 13px;
+        font-size: 11.5px;
+        font-weight: 600;
+      }
+      .review-form .rv-submit:hover {
+        background: var(--orange-dark);
+      }
+      .review-locked {
+        font-size: 11.5px;
+        color: var(--slate);
+        font-style: italic;
+      }
+
+      /* ---------- modal ---------- */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(30, 33, 38, 0.62);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        padding: 20px;
+        backdrop-filter: blur(2px);
+      }
+      .modal-backdrop.show {
+        display: flex;
+      }
+      .modal {
+        background: var(--paper);
+        border-radius: 10px;
+        max-width: 400px;
+        width: 100%;
+        padding: 28px 26px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        position: relative;
+      }
+      .modal .close-x {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: var(--slate);
+        line-height: 1;
+      }
+      .modal .close-x:hover {
+        color: var(--asphalt);
+      }
+      .modal-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 20px;
+        background: var(--concrete-2);
+        border-radius: 20px;
+        padding: 3px;
+      }
+      .modal-tabs button {
+        flex: 1;
+        padding: 8px;
+        border: none;
+        background: none;
+        border-radius: 18px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--slate);
+      }
+      .modal-tabs button.active {
+        background: var(--asphalt);
+        color: var(--white);
+      }
+      .modal h3 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      .modal .sub-txt {
+        font-size: 13px;
+        color: var(--slate);
+        margin-bottom: 20px;
+      }
+      .modal .err {
+        font-size: 12.5px;
+        color: var(--red);
+        margin-top: 8px;
+        display: none;
+      }
+      .modal .err.show {
+        display: block;
+      }
+
+      footer {
+        background: var(--asphalt);
+        color: #9ba1a9;
+        text-align: center;
+        padding: 24px;
+        font-size: 12px;
+      }
+      footer a {
+        text-decoration: underline;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+      :focus-visible {
+        outline: 2px solid var(--orange);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="#F1EDE4" stroke-width="2" />
+          <circle cx="20" cy="20" r="6" fill="#F1EDE4" />
+          <path
+            d="M20 2 L20 8 M20 32 L20 38 M2 20 L8 20 M32 20 L38 20"
+            stroke="#E8590C"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          />
+        </svg>
+        <div class="brand-text">
+          <p class="display">munciPAL</p>
+          <p class="sub">Municipal Service Requests</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="count" id="headerCount">0 open requests</span>
+        <span class="divider"></span>
+        <div id="authArea"></div>
+      </div>
+    </header>
+    <div class="hazard-strip"></div>
+
+    <section class="hero">
+      <div>
+        <span class="eyebrow">Public Works &middot; Report an Issue</span>
+        <h1>
+          Broken road.<br />Blocked drain.<br /><span>File it in minutes.</span>
+        </h1>
+        <p class="lede">
+          Report potholes, damaged roads, choked sewage lines, streetlights, and
+          other public infrastructure faults directly to the works department.
+          Register to track your reports and leave a review once the fix is
+          done.
+        </p>
+        <div class="stat-row">
+          <div class="stat">
+            <div class="num mono" id="statTotal">0</div>
+            <div class="lbl">Filed</div>
+          </div>
+          <div class="stat">
+            <div class="num mono" id="statOpen">0</div>
+            <div class="lbl">Open</div>
+          </div>
+          <div class="stat">
+            <div class="num mono" id="statResolved">0</div>
+            <div class="lbl">Resolved</div>
+          </div>
+          <div class="stat">
+            <div class="num mono" id="statRate">0%</div>
+            <div class="lbl">Resolution rate</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket-wrap">
+        <form class="ticket" id="reportForm">
+          <div class="stamp" id="stamp">FILED</div>
+          <div class="form-title">
+            <span>Service Request Form</span
+            ><span class="id-tag" id="nextId">Assigned on submit</span>
+          </div>
+
+          <div class="field">
+            <label>Issue category</label>
+            <div class="cat-grid" id="catGrid"></div>
+            <input type="hidden" id="category" required />
+          </div>
+
+          <div class="field">
+            <label for="location">Location</label>
+            <input
+              type="text"
+              id="location"
+              placeholder="Street, landmark, or area"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              placeholder="What's wrong, and how big a problem is it?"
+              required
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Severity</label>
+            <div class="sev-row" id="sevRow">
+              <button type="button" class="sev-btn" data-sev="Low">Low</button>
+              <button type="button" class="sev-btn" data-sev="Medium">
+                Medium
+              </button>
+              <button type="button" class="sev-btn" data-sev="High">
+                High
+              </button>
+              <button type="button" class="sev-btn" data-sev="Urgent">
+                Urgent
+              </button>
+            </div>
+            <input type="hidden" id="severity" required />
+          </div>
+
+          <div class="field">
+            <label for="photoInput">Photo (optional)</label>
+            <div class="photo-drop" id="photoDrop">
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke-width="1.6"
+              >
+                <path d="M4 16l4.5-6 3.5 4 3-3.5L20 16" />
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <circle cx="8" cy="9" r="1.5" />
+              </svg>
+              <div class="txt">Tap to attach a photo of the issue</div>
+            </div>
+            <input
+              type="file"
+              id="photoInput"
+              accept="image/*"
+              class="sr-only"
+            />
+            <div class="photo-preview" id="photoPreview"></div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn">
+            Submit request
+          </button>
+          <p
+            class="hint"
+            style="text-align: center; margin-top: 10px"
+            id="formHint"
+          >
+            Signed in as guest — you can still file a report; sign in to track
+            it under your name.
+          </p>
+        </form>
+      </div>
+    </section>
+
+    <div class="route-divider">
+      <svg viewBox="0 0 1200 24" preserveAspectRatio="none">
+        <line
+          x1="0"
+          y1="12"
+          x2="1200"
+          y2="12"
+          stroke="#D8D2C2"
+          stroke-width="2"
+          stroke-dasharray="24 16"
+        />
+      </svg>
+    </div>
+
+    <section class="ledger">
+      <div class="ledger-head">
+        <h2>Open Tickets</h2>
+        <div class="filters" id="filters">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="open">Open</button>
+          <button class="filter-btn" data-filter="resolved">Resolved</button>
+          <button
+            class="filter-btn"
+            data-filter="mine"
+            id="mineFilterBtn"
+            style="display: none"
+          >
+            My reports
+          </button>
+        </div>
+      </div>
+      <div id="ledgerBody"></div>
+    </section>
+
+    <footer>
+      munciPAL &middot; civic issue reporting for your community &middot;
+      reports, profiles, and reviews are visible to everyone using this page
+    </footer>
+
+    <!-- Auth modal -->
+    <div class="modal-backdrop" id="authBackdrop">
+      <div class="modal">
+        <button class="close-x" id="closeModal" aria-label="Close">
+          &times;
+        </button>
+        <div class="modal-tabs">
+          <button type="button" id="tabLogin" class="active">Sign in</button>
+          <button type="button" id="tabRegister">Register</button>
+        </div>
+
+        <div id="loginPane">
+          <h3>Welcome back</h3>
+          <p class="sub-txt">
+            Sign in to track your reports and leave reviews.
+          </p>
+          <div class="field">
+            <label for="loginEmail">Email</label
+            ><input
+              type="email"
+              id="loginEmail"
+              placeholder="you@example.com"
+            />
+          </div>
+          <div class="field">
+            <label for="loginPassword">Password</label
+            ><input type="password" id="loginPassword" placeholder="••••••••" />
+          </div>
+          <button class="submit-btn" id="loginSubmit" type="button">
+            Sign in
+          </button>
+          <p class="err" id="loginErr">
+            No profile found with that email — try registering instead.
+          </p>
+          <p class="err" id="loginPassErr">Incorrect password.</p>
+        </div>
+
+        <div id="registerPane" style="display: none">
+          <h3>Create your profile</h3>
+          <p class="sub-txt">
+            Just your name, email, and a password to get started.
+          </p>
+          <div class="field">
+            <label for="regName">Full name</label
+            ><input type="text" id="regName" placeholder="Jordan Reyes" />
+          </div>
+          <div class="field">
+            <label for="regEmail">Email</label
+            ><input type="email" id="regEmail" placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label for="regPassword">Password</label
+            ><input
+              type="password"
+              id="regPassword"
+              placeholder="At least 8 characters"
+            />
+          </div>
+          <div class="field">
+            <label for="regPasswordConfirm">Confirm password</label
+            ><input
+              type="password"
+              id="regPasswordConfirm"
+              placeholder="Re-enter password"
+            />
+          </div>
+          <div class="field">
+            <label for="regArea"
+              >Ward / area
+              <span
+                style="
+                  text-transform: none;
+                  color: var(--slate);
+                  font-weight: 400;
+                "
+                >(optional)</span
+              ></label
+            ><input
+              type="text"
+              id="regArea"
+              placeholder="e.g. Ward 12, Riverside"
+            />
+          </div>
+          <button class="submit-btn" id="registerSubmit" type="button">
+            Create profile
+          </button>
+          <p class="err" id="registerErr">
+            That email is already registered — try signing in.
+          </p>
+          <p class="err" id="registerPassErr">
+            Passwords must be at least 8 characters and match.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const CATEGORIES = [
+        {
+          id: "pothole",
+          label: "Pothole",
+          icon: '<circle cx="12" cy="12" r="8"/><path d="M8 10l3 2-1 4M15 9l-2 3 2 3"/>',
+        },
+        {
+          id: "road",
+          label: "Damaged Road",
+          icon: '<path d="M3 20h18M6 20l3-16h6l3 16"/><path d="M11 8l-1.5 6M14 10l1 5"/>',
+        },
+        {
+          id: "drain",
+          label: "Choked Drain",
+          icon: '<rect x="4" y="6" width="16" height="12" rx="1.5"/><path d="M7 9h.01M7 12h.01M7 15h.01M12 9h.01M12 12h.01M12 15h.01M17 9h.01M17 12h.01M17 15h.01"/>',
+        },
+        {
+          id: "light",
+          label: "Streetlight",
+          icon: '<path d="M12 3v4"/><rect x="8" y="7" width="8" height="7" rx="1.5"/><path d="M10 14l-1 7h6l-1-7"/>',
+        },
+        {
+          id: "garbage",
+          label: "Garbage",
+          icon: '<path d="M5 7h14l-1.2 13a2 2 0 01-2 1.8H8.2a2 2 0 01-2-1.8L5 7z"/><path d="M9 3h6l1 4H8l1-4z"/>',
+        },
+        {
+          id: "water",
+          label: "Water Leak",
+          icon: '<path d="M12 3c3 4 6 7.5 6 11a6 6 0 11-12 0c0-3.5 3-7 6-11z"/>',
+        },
+        {
+          id: "signal",
+          label: "Traffic Signal",
+          icon: '<rect x="8" y="2" width="8" height="16" rx="3"/><circle cx="12" cy="6" r="1.3"/><circle cx="12" cy="10" r="1.3"/><circle cx="12" cy="14" r="1.3"/><path d="M12 18v4"/>',
+        },
+        {
+          id: "other",
+          label: "Other",
+          icon: '<path d="M14.7 6.3a4 4 0 00-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 005.4-5.4l-2.8 2.8-2-2 2.8-2.8z"/>',
+        },
+      ];
+      /* ---------------- Supabase config — fill these in from your project ---------------- */
+      const SUPABASE_URL = "https://rhihavyncjuxijoeiwqf.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "sb_publishable_W6Z1oio3nmp9MhRXjGnk5A_Rh_OUarT";
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const PHOTO_BUCKET = "report-photos";
+
+      let reports = [];
+      let reviews = {};
+      let currentUser = null;
+      let selectedCategory = null;
+      let selectedSeverity = null;
+      let pendingPhoto = null;
+      let currentFilter = "all";
+      let reviewDraftStars = {};
+
+      const STAR_FULL =
+        '<svg viewBox="0 0 20 20" class="star-fill"><path d="M10 1.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z"/></svg>';
+      const STAR_EMPTY =
+        '<svg viewBox="0 0 20 20" class="star-empty" stroke-width="1.3"><path d="M10 1.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z"/></svg>';
+
+      function starsHtml(rating, size) {
+        let out = `<span class="stars">`;
+        for (let i = 1; i <= 5; i++)
+          out += i <= Math.round(rating) ? STAR_FULL : STAR_EMPTY;
+        return out + `</span>`;
+      }
+
+      function initials(name) {
+        const parts = name.trim().split(/\s+/);
+        return (
+          ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?"
+        );
+      }
+
+      function escapeHtml(str) {
+        const d = document.createElement("div");
+        d.textContent = str;
+        return d.innerHTML;
+      }
+
+      /* password hashing is now handled server-side by Supabase Auth — no client-side hashing needed */
+
+      /* ---------------- category & severity pickers ---------------- */
+      const catGrid = document.getElementById("catGrid");
+      CATEGORIES.forEach((c) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "cat-btn";
+        btn.dataset.cat = c.id;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${c.icon}</svg><span>${c.label}</span>`;
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".cat-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          selectedCategory = c.id;
+          document.getElementById("category").value = c.id;
+        });
+        catGrid.appendChild(btn);
+      });
+
+      document.querySelectorAll(".sev-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".sev-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          selectedSeverity = btn.dataset.sev;
+          document.getElementById("severity").value = selectedSeverity;
+        });
+      });
+
+      /* ---------------- photo handling ---------------- */
+      const photoDrop = document.getElementById("photoDrop");
+      const photoInput = document.getElementById("photoInput");
+      const photoPreview = document.getElementById("photoPreview");
+      photoDrop.addEventListener("click", () => photoInput.click());
+      photoInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          pendingPhoto = await resizeImage(file, 480);
+          photoPreview.innerHTML = `<img src="${pendingPhoto}" alt="Attached photo preview">`;
+        } catch (err) {
+          console.error("Photo processing error:", err);
+          photoDrop.querySelector(".txt").textContent =
+            "Couldn't read that photo — try another.";
+        }
+      });
+
+      function resizeImage(file, maxDim) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = () => reject(new Error("read failed"));
+          reader.onload = (ev) => {
+            const img = new Image();
+            img.onerror = () => reject(new Error("decode failed"));
+            img.onload = () => {
+              let w = img.width,
+                h = img.height;
+              if (w > h && w > maxDim) {
+                h = h * (maxDim / w);
+                w = maxDim;
+              } else if (h > maxDim) {
+                w = w * (maxDim / h);
+                h = maxDim;
+              }
+              const canvas = document.createElement("canvas");
+              canvas.width = w;
+              canvas.height = h;
+              canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+              resolve(canvas.toDataURL("image/jpeg", 0.6));
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function dataURLtoBlob(dataURL) {
+        const [header, base64] = dataURL.split(",");
+        const mime = header.match(/:(.*?);/)[1];
+        const bin = atob(base64);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return new Blob([arr], { type: mime });
+      }
+
+      /* ---------------- data loading (Supabase) ---------------- */
+      async function loadAll() {
+        try {
+          const {
+            data: { session },
+          } = await sb.auth.getSession();
+          if (session) {
+            const { data: profile } = await sb
+              .from("profiles")
+              .select("*")
+              .eq("id", session.user.id)
+              .single();
+            currentUser = {
+              id: session.user.id,
+              email: session.user.email,
+              name: profile?.name || session.user.email,
+              area: profile?.area || "",
+            };
+          }
+
+          const [reportsRes, reviewsRes] = await Promise.all([
+            sb
+              .from("reports")
+              .select("*")
+              .order("created_at", { ascending: false }),
+            sb
+              .from("reviews")
+              .select("*")
+              .order("created_at", { ascending: true }),
+          ]);
+
+          if (reportsRes.error)
+            console.error("Load reports error:", reportsRes.error);
+          reports = (reportsRes.data || []).map((r) => ({
+            id: r.id,
+            category: r.category,
+            categoryLabel: r.category_label,
+            categoryIcon: r.category_icon,
+            location: r.location,
+            description: r.description,
+            severity: r.severity,
+            photo: r.photo_url,
+            status: r.status,
+            createdAt: new Date(r.created_at).getTime(),
+            authorId: r.author_id,
+            authorName: r.author_name,
+          }));
+
+          if (reviewsRes.error)
+            console.error("Load reviews error:", reviewsRes.error);
+          reviews = {};
+          (reviewsRes.data || []).forEach((rv) => {
+            if (!reviews[rv.report_id]) reviews[rv.report_id] = [];
+            reviews[rv.report_id].push({
+              authorId: rv.author_id,
+              author: rv.author_name,
+              avatarInit: initials(rv.author_name),
+              rating: rv.rating,
+              comment: rv.comment,
+              createdAt: new Date(rv.created_at).getTime(),
+            });
+          });
+        } catch (err) {
+          console.error("Load error:", err);
+        }
+        renderAuthArea();
+        render();
+      }
+
+      /* ---------------- auth UI ---------------- */
+      const authBackdrop = document.getElementById("authBackdrop");
+      const tabLogin = document.getElementById("tabLogin");
+      const tabRegister = document.getElementById("tabRegister");
+      const loginPane = document.getElementById("loginPane");
+      const registerPane = document.getElementById("registerPane");
+
+      function renderAuthArea() {
+        const area = document.getElementById("authArea");
+        const mineBtn = document.getElementById("mineFilterBtn");
+        if (currentUser) {
+          area.innerHTML = `<div class="user-chip"><span class="avatar">${initials(currentUser.name)}</span><span class="name">${escapeHtml(currentUser.name)}</span><button id="signOutBtn">Sign out</button></div>`;
+          document
+            .getElementById("signOutBtn")
+            .addEventListener("click", async () => {
+              await sb.auth.signOut();
+              currentUser = null;
+              renderAuthArea();
+              if (currentFilter === "mine") currentFilter = "all";
+              render();
+            });
+          document.getElementById("formHint").textContent =
+            `Filing as ${currentUser.name}.`;
+          mineBtn.style.display = "inline-block";
+        } else {
+          area.innerHTML = `<button class="auth-btn" id="openAuthBtn">Sign in</button>`;
+          document
+            .getElementById("openAuthBtn")
+            .addEventListener("click", () => openModal("login"));
+          document.getElementById("formHint").textContent =
+            "Signed in as guest — you can still file a report; sign in to track it under your name.";
+          mineBtn.style.display = "none";
+        }
+      }
+
+      function openModal(tab) {
+        authBackdrop.classList.add("show");
+        switchTab(tab);
+      }
+      function closeModalFn() {
+        authBackdrop.classList.remove("show");
+      }
+      document
+        .getElementById("closeModal")
+        .addEventListener("click", closeModalFn);
+      authBackdrop.addEventListener("click", (e) => {
+        if (e.target === authBackdrop) closeModalFn();
+      });
+
+      function switchTab(tab) {
+        const isLogin = tab === "login";
+        tabLogin.classList.toggle("active", isLogin);
+        tabRegister.classList.toggle("active", !isLogin);
+        loginPane.style.display = isLogin ? "block" : "none";
+        registerPane.style.display = isLogin ? "none" : "block";
+        document.getElementById("loginErr").classList.remove("show");
+        document.getElementById("registerErr").classList.remove("show");
+        document.getElementById("loginPassErr").classList.remove("show");
+        document.getElementById("registerPassErr").classList.remove("show");
+      }
+      tabLogin.addEventListener("click", () => switchTab("login"));
+      tabRegister.addEventListener("click", () => switchTab("register"));
+
+      document
+        .getElementById("loginSubmit")
+        .addEventListener("click", async () => {
+          const email = document
+            .getElementById("loginEmail")
+            .value.trim()
+            .toLowerCase();
+          const password = document.getElementById("loginPassword").value;
+          document.getElementById("loginErr").classList.remove("show");
+          document.getElementById("loginPassErr").classList.remove("show");
+          if (!email || !password) return;
+          const { data, error } = await sb.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (error) {
+            document.getElementById("loginErr").textContent =
+              "Incorrect email or password.";
+            document.getElementById("loginErr").classList.add("show");
+            return;
+          }
+          const { data: profile } = await sb
+            .from("profiles")
+            .select("*")
+            .eq("id", data.user.id)
+            .single();
+          currentUser = {
+            id: data.user.id,
+            email: data.user.email,
+            name: profile?.name || data.user.email,
+            area: profile?.area || "",
+          };
+          closeModalFn();
+          renderAuthArea();
+          render();
+          document.getElementById("loginPassword").value = "";
+        });
+
+      document
+        .getElementById("registerSubmit")
+        .addEventListener("click", async () => {
+          const name = document.getElementById("regName").value.trim();
+          const email = document
+            .getElementById("regEmail")
+            .value.trim()
+            .toLowerCase();
+          const password = document.getElementById("regPassword").value;
+          const passwordConfirm =
+            document.getElementById("regPasswordConfirm").value;
+          const area = document.getElementById("regArea").value.trim();
+          document.getElementById("registerErr").classList.remove("show");
+          document.getElementById("registerPassErr").classList.remove("show");
+          if (!name || !email) return;
+          if (password.length < 8 || password !== passwordConfirm) {
+            document.getElementById("registerPassErr").classList.add("show");
+            return;
+          }
+          const { data, error } = await sb.auth.signUp({ email, password });
+          if (error) {
+            document.getElementById("registerErr").textContent = error.message;
+            document.getElementById("registerErr").classList.add("show");
+            return;
+          }
+          await sb.from("profiles").insert({ id: data.user.id, name, area });
+
+          document.getElementById("regName").value = "";
+          document.getElementById("regEmail").value = "";
+          document.getElementById("regArea").value = "";
+          document.getElementById("regPassword").value = "";
+          document.getElementById("regPasswordConfirm").value = "";
+
+          if (data.session) {
+            currentUser = { id: data.user.id, email, name, area };
+            closeModalFn();
+            renderAuthArea();
+            render();
+          } else {
+            document.getElementById("registerErr").textContent =
+              "Account created — check your email to confirm it, then sign in.";
+            document.getElementById("registerErr").classList.add("show");
+            switchTab("login");
+          }
+        });
+
+      /* ---------------- report submission ---------------- */
+      document
+        .getElementById("reportForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const location = document.getElementById("location").value.trim();
+          const description = document
+            .getElementById("description")
+            .value.trim();
+          if (
+            !selectedCategory ||
+            !location ||
+            !description ||
+            !selectedSeverity
+          ) {
+            alert(
+              "Please fill in category, location, description, and severity.",
+            );
+            return;
+          }
+          const submitBtn = document.getElementById("submitBtn");
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Submitting…";
+
+          try {
+            let photoUrl = null;
+            if (pendingPhoto) {
+              const blob = dataURLtoBlob(pendingPhoto);
+              const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+              const { error: upErr } = await sb.storage
+                .from(PHOTO_BUCKET)
+                .upload(path, blob, { contentType: "image/jpeg" });
+              if (upErr) {
+                console.error("Photo upload error:", upErr);
+              } else {
+                photoUrl = sb.storage.from(PHOTO_BUCKET).getPublicUrl(path)
+                  .data.publicUrl;
+              }
+            }
+
+            const catInfo = CATEGORIES.find((c) => c.id === selectedCategory);
+            const { data, error } = await sb
+              .from("reports")
+              .insert({
+                category: selectedCategory,
+                category_label: catInfo.label,
+                category_icon: catInfo.icon,
+                location,
+                description,
+                severity: selectedSeverity,
+                photo_url: photoUrl,
+                status: "Submitted",
+                author_id: currentUser ? currentUser.id : null,
+                author_name: currentUser ? currentUser.name : "Guest",
+              })
+              .select()
+              .single();
+
+            if (error) {
+              alert("Could not submit your report: " + error.message);
+              return;
+            }
+
+            reports.unshift({
+              id: data.id,
+              category: data.category,
+              categoryLabel: data.category_label,
+              categoryIcon: data.category_icon,
+              location: data.location,
+              description: data.description,
+              severity: data.severity,
+              photo: data.photo_url,
+              status: data.status,
+              createdAt: new Date(data.created_at).getTime(),
+              authorId: data.author_id,
+              authorName: data.author_name,
+            });
+
+            document.getElementById("reportForm").reset();
+            document
+              .querySelectorAll(".cat-btn")
+              .forEach((b) => b.classList.remove("active"));
+            document
+              .querySelectorAll(".sev-btn")
+              .forEach((b) => b.classList.remove("active"));
+            selectedCategory = null;
+            selectedSeverity = null;
+            pendingPhoto = null;
+            photoPreview.innerHTML = "";
+            document.getElementById("category").value = "";
+            document.getElementById("severity").value = "";
+
+            const stamp = document.getElementById("stamp");
+            stamp.classList.add("show");
+            setTimeout(() => stamp.classList.remove("show"), 1800);
+
+            render();
+          } catch (err) {
+            console.error("Submit error:", err);
+            alert("Something went wrong submitting your report.");
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit request";
+          }
+        });
+
+      /* ---------------- filters ---------------- */
+      document.getElementById("filters").addEventListener("click", (e) => {
+        const btn = e.target.closest(".filter-btn");
+        if (!btn) return;
+        document
+          .querySelectorAll(".filter-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        render();
+      });
+
+      /* ---------------- ticket actions ---------------- */
+      async function setStatus(id, status) {
+        const r = reports.find((r) => r.id === id);
+        if (!r) return;
+        const { error } = await sb
+          .from("reports")
+          .update({ status })
+          .eq("id", id);
+        if (error) {
+          console.error("Update status error:", error);
+          alert("Could not update status: " + error.message);
+          return;
+        }
+        r.status = status;
+        render();
+      }
+      async function withdraw(id) {
+        if (!confirm("Withdraw this report? This cannot be undone.")) return;
+        const { error } = await sb.from("reports").delete().eq("id", id);
+        if (error) {
+          console.error("Withdraw error:", error);
+          alert("Could not withdraw: " + error.message);
+          return;
+        }
+        reports = reports.filter((r) => r.id !== id);
+        render();
+      }
+      window.setStatus = setStatus;
+      window.withdraw = withdraw;
+
+      /* ---------------- reviews ---------------- */
+      function setDraftStars(reportId, n) {
+        reviewDraftStars[reportId] = n;
+        const wrap = document.getElementById("starInput-" + reportId);
+        if (wrap) wrap.innerHTML = buildStarInput(reportId, n);
+      }
+      window.setDraftStars = setDraftStars;
+
+      function buildStarInput(reportId, current) {
+        let html = "";
+        for (let i = 1; i <= 5; i++) {
+          html += `<button type="button" onclick="setDraftStars('${reportId}',${i})">${i <= current ? STAR_FULL : STAR_EMPTY}</button>`;
+        }
+        return html;
+      }
+
+      async function submitReview(reportId) {
+        const rating = reviewDraftStars[reportId] || 0;
+        const textEl = document.getElementById("reviewText-" + reportId);
+        const comment = textEl ? textEl.value.trim() : "";
+        if (!rating) {
+          alert("Pick a star rating first.");
+          return;
+        }
+        const { error } = await sb.from("reviews").insert({
+          report_id: reportId,
+          author_id: currentUser.id,
+          author_name: currentUser.name,
+          rating,
+          comment,
+        });
+        if (error) {
+          alert(
+            error.code === "23505"
+              ? "You already reviewed this ticket."
+              : "Could not post review: " + error.message,
+          );
+          return;
+        }
+        if (!reviews[reportId]) reviews[reportId] = [];
+        reviews[reportId].push({
+          authorId: currentUser.id,
+          author: currentUser.name,
+          avatarInit: initials(currentUser.name),
+          rating,
+          comment,
+          createdAt: Date.now(),
+        });
+        reviewDraftStars[reportId] = 0;
+        render();
+      }
+      window.submitReview = submitReview;
+
+      function timeAgo(ts) {
+        const s = Math.floor((Date.now() - ts) / 1000);
+        if (s < 60) return "just now";
+        if (s < 3600) return Math.floor(s / 60) + "m ago";
+        if (s < 86400) return Math.floor(s / 3600) + "h ago";
+        return Math.floor(s / 86400) + "d ago";
+      }
+
+      function reviewsBlockHtml(report) {
+        const list = reviews[report.id] || [];
+        const avg = list.length
+          ? list.reduce((a, b) => a + b.rating, 0) / list.length
+          : 0;
+        let html = `<div class="reviews-block">`;
+        html += `<div class="reviews-summary">${starsHtml(avg)} <span>${list.length ? avg.toFixed(1) + " · " + list.length + " review" + (list.length === 1 ? "" : "s") : "No reviews yet"}</span></div>`;
+        list
+          .slice()
+          .reverse()
+          .forEach((rv) => {
+            html += `<div class="review-item">
+      <div class="rv-head"><span class="rv-avatar">${rv.avatarInit}</span><span class="rv-name">${escapeHtml(rv.author)}</span>${starsHtml(rv.rating)}<span class="rv-time">${timeAgo(rv.createdAt)}</span></div>
+      ${rv.comment ? `<div class="rv-comment">${escapeHtml(rv.comment)}</div>` : ""}
+    </div>`;
+          });
+        if (currentUser) {
+          const already = list.some((rv) => rv.authorId === currentUser.id);
+          if (!already) {
+            html += `<div class="review-form">
+        <div class="star-input" id="starInput-${report.id}">${buildStarInput(report.id, reviewDraftStars[report.id] || 0)}</div>
+        <textarea id="reviewText-${report.id}" placeholder="How did the fix go?"></textarea>
+        <button type="button" class="rv-submit" onclick="submitReview('${report.id}')">Post review</button>
+      </div>`;
+          }
+        } else {
+          html += `<p class="review-locked">Sign in to leave a review.</p>`;
+        }
+        html += `</div>`;
+        return html;
+      }
+
+      /* ---------------- main render ---------------- */
+      function render() {
+        const total = reports.length;
+        const resolved = reports.filter((r) => r.status === "Resolved").length;
+        const open = total - resolved;
+        document.getElementById("statTotal").textContent = total;
+        document.getElementById("statOpen").textContent = open;
+        document.getElementById("statResolved").textContent = resolved;
+        document.getElementById("statRate").textContent = total
+          ? Math.round((resolved / total) * 100) + "%"
+          : "0%";
+        document.getElementById("headerCount").textContent =
+          open + " open request" + (open === 1 ? "" : "s");
+
+        let list = reports;
+        if (currentFilter === "open")
+          list = reports.filter((r) => r.status !== "Resolved");
+        if (currentFilter === "resolved")
+          list = reports.filter((r) => r.status === "Resolved");
+        if (currentFilter === "mine" && currentUser)
+          list = reports.filter((r) => r.authorId === currentUser.id);
+
+        const body = document.getElementById("ledgerBody");
+        if (list.length === 0) {
+          body.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+      <div class="t">No tickets here yet</div>
+      <div>${reports.length === 0 ? "File your first report above and it will show up here." : "Nothing matches this filter."}</div>
+    </div>`;
+          return;
+        }
+
+        body.innerHTML = `<div class="tickets-grid">${list
+          .map(
+            (r) => `
+    <div class="ticket-card">
+      <div class="tc-top">
+        <div>
+          <div class="tc-id">RD-${r.id.slice(0, 8).toUpperCase()}</div>
+          <div class="tc-cat"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${r.categoryIcon}</svg>${r.categoryLabel}</div>
+        </div>
+        <span class="badge ${r.status.replace(" ", "")}">${r.status}</span>
+      </div>
+      <div class="tc-loc"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>${escapeHtml(r.location)}</div>
+      ${r.photo ? `<img class="tc-photo" src="${r.photo}" alt="Photo of reported issue">` : ""}
+      <div class="tc-desc">${escapeHtml(r.description)}</div>
+      <div class="tc-author">Filed by ${escapeHtml(r.authorName || "Guest")}</div>
+      <div class="tc-bottom">
+        <div>
+          <div class="tc-sev ${r.severity}">${r.severity} severity</div>
+          <div class="tc-date">${timeAgo(r.createdAt)}</div>
+        </div>
+        <div class="tc-actions">
+          ${r.status !== "Resolved" ? `<button class="resolve" onclick="setStatus('${r.id}','Resolved')">Mark resolved</button>` : `<button onclick="setStatus('${r.id}','Submitted')">Reopen</button>`}
+          <button class="withdraw" onclick="withdraw('${r.id}')">Withdraw</button>
+        </div>
+      </div>
+      ${r.status === "Resolved" ? reviewsBlockHtml(r) : ""}
+    </div>
+  `,
+          )
+          .join("")}</div>`;
+      }
+
+      loadAll();
+    </script>
+  </body>
+</html>
