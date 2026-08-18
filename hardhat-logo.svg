@@ -1,0 +1,19 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- brim shadow -->
+  <ellipse cx="50" cy="70" rx="43" ry="9" fill="#8A6A03"/>
+  <!-- brim -->
+  <ellipse cx="50" cy="66" rx="43" ry="9" fill="#D9A404" stroke="#8A6A03" stroke-width="1.8"/>
+  <!-- dome -->
+  <path d="M12 66 C12 28 28 10 50 10 C72 10 88 28 88 66 Z" fill="#E8B923" stroke="#8A6A03" stroke-width="1.8"/>
+  <!-- dome shading (right side, darker) -->
+  <path d="M50 10 C72 10 88 28 88 66 L64 66 C64 34 58 16 50 10 Z" fill="#C99A0E" opacity="0.55"/>
+  <!-- highlight sweep -->
+  <path d="M26 42 C30 24 39 14 50 12" stroke="#F7DE8A" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <!-- center ridge -->
+  <path d="M50 10 L50 66" stroke="#8A6A03" stroke-width="1.4" opacity="0.5"/>
+  <!-- side ridge -->
+  <path d="M18 42 C28 30 39 24 50 24 C61 24 72 30 82 42" stroke="#8A6A03" stroke-width="1.4" fill="none" opacity="0.4"/>
+  <!-- top vent knob -->
+  <circle cx="50" cy="13" r="3.4" fill="#8A6A03"/>
+  <circle cx="50" cy="13" r="1.6" fill="#F7DE8A"/>
+</svg>
