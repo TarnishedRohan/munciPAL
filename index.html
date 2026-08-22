@@ -1,5 +1,5 @@
-<!doctype html> 
-<html lang="en"> 
+<!doctype html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -276,13 +276,6 @@
         margin: 0 0 30px;
       }
 
-      .road-art {
-        width: 100%;
-        max-width: 420px;
-        height: auto;
-        margin-bottom: 8px;
-      }
-
       .stat-row {
         display: flex;
         gap: 0;
@@ -488,6 +481,7 @@
         color: var(--white);
       }
 
+      /* Multi-photo upload styles */
       .photo-drop {
         border: 1.5px dashed #c9c2af;
         border-radius: 6px;
@@ -495,10 +489,12 @@
         text-align: center;
         cursor: pointer;
         background: var(--white);
-        transition: border-color 0.15s ease;
+        transition: all 0.15s ease;
       }
-      .photo-drop:hover {
+      .photo-drop:hover,
+      .photo-drop.dragover {
         border-color: var(--orange);
+        background: var(--orange-glow);
       }
       .photo-drop .icon {
         width: 22px;
@@ -511,18 +507,175 @@
         font-size: 12.5px;
         color: var(--slate);
       }
-      .photo-preview {
-        margin-top: 10px;
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
+      .photo-drop .sub-hint {
+        font-size: 11px;
+        color: #8b929b;
+        margin-top: 4px;
       }
-      .photo-preview img {
-        width: 64px;
-        height: 64px;
-        object-fit: cover;
+      .photo-preview {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+        gap: 8px;
+      }
+      .photo-thumb-wrap {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 6px;
+        overflow: hidden;
         border: 1px solid var(--asphalt);
+        background: var(--asphalt-2);
+      }
+      .photo-thumb-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .photo-thumb-wrap .del-btn {
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        width: 18px;
+        height: 18px;
+        background: rgba(18, 43, 46, 0.85);
+        color: var(--white);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        transition: background 0.15s ease;
+      }
+      .photo-thumb-wrap .del-btn:hover {
+        background: var(--red);
+      }
+      .photo-thumb-wrap .idx-badge {
+        position: absolute;
+        bottom: 3px;
+        left: 3px;
+        background: rgba(18, 43, 46, 0.75);
+        color: var(--white);
+        font-size: 9px;
+        font-family: "JetBrains Mono", monospace;
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+
+      /* Multi-photo card styles */
+      .tc-gallery {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .tc-photo-main {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
         border-radius: 5px;
+        border: 1px solid var(--line);
+        cursor: zoom-in;
+        transition: transform 0.15s ease;
+      }
+      .tc-photo-main:hover {
+        filter: brightness(0.96);
+      }
+      .tc-thumbs-row {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+      .tc-thumb-item {
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        border-radius: 4px;
+        border: 1.5px solid var(--line);
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+      }
+      .tc-thumb-item.active {
+        border-color: var(--orange);
+      }
+      .tc-thumb-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* Lightbox Modal */
+      .lightbox-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(12, 25, 27, 0.88);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        padding: 24px;
+        backdrop-filter: blur(4px);
+      }
+      .lightbox-backdrop.show {
+        display: flex;
+      }
+      .lightbox-content {
+        position: relative;
+        max-width: 90vw;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .lightbox-img {
+        max-width: 100%;
+        max-height: 75vh;
+        object-fit: contain;
+        border-radius: 6px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .lightbox-nav {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 14px;
+        color: var(--concrete);
+        font-size: 13px;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .lightbox-btn {
+        background: rgba(255, 255, 255, 0.15);
+        color: var(--white);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .lightbox-btn:hover {
+        background: var(--orange);
+      }
+      .lightbox-close {
+        position: absolute;
+        top: -36px;
+        right: 0;
+        background: none;
+        border: none;
+        color: var(--white);
+        font-size: 28px;
+        cursor: pointer;
+        line-height: 1;
       }
 
       .submit-btn {
@@ -742,13 +895,6 @@
         font-size: 13px;
         color: #3e4145;
         line-height: 1.45;
-      }
-      .tc-photo {
-        width: 100%;
-        height: 130px;
-        object-fit: cover;
-        border-radius: 5px;
-        border: 1px solid var(--line);
       }
       .tc-author {
         font-size: 11px;
@@ -1037,7 +1183,7 @@
   <body>
     <header>
       <div class="brand">
-                <img class="brand-mark" src="hardhat-logo.svg" alt="munciPAL logo">
+        <img class="brand-mark" src="hardhat-logo.svg" alt="munciPAL logo" onerror="this.style.display='none'">
         <div class="brand-text">
           <p class="display">munciPAL</p>
           <p class="sub">Municipal Service Requests</p>
@@ -1143,8 +1289,9 @@
             <input type="hidden" id="severity" required />
           </div>
 
+          <!-- Multi-photo upload section -->
           <div class="field">
-            <label for="photoInput">Photo (optional)</label>
+            <label for="photoInput">Photos (optional, up to 5)</label>
             <div class="photo-drop" id="photoDrop">
               <svg
                 class="icon"
@@ -1156,12 +1303,14 @@
                 <rect x="3" y="4" width="18" height="16" rx="2" />
                 <circle cx="8" cy="9" r="1.5" />
               </svg>
-              <div class="txt">Tap to attach a photo of the issue</div>
+              <div class="txt" id="photoDropText">Tap or drop photos to attach</div>
+              <div class="sub-hint">PNG, JPG or WebP (max 5 photos)</div>
             </div>
             <input
               type="file"
               id="photoInput"
               accept="image/*"
+              multiple
               class="sr-only"
             />
             <div class="photo-preview" id="photoPreview"></div>
@@ -1317,6 +1466,19 @@
       </div>
     </div>
 
+    <!-- Lightbox Modal for inspecting photos -->
+    <div class="lightbox-backdrop" id="lightboxBackdrop">
+      <div class="lightbox-content">
+        <button class="lightbox-close" id="closeLightbox" aria-label="Close image">&times;</button>
+        <img class="lightbox-img" id="lightboxImg" src="" alt="Full view photo">
+        <div class="lightbox-nav">
+          <button class="lightbox-btn" id="lightboxPrev" aria-label="Previous image">&#8592;</button>
+          <span id="lightboxCounter">1 / 1</span>
+          <button class="lightbox-btn" id="lightboxNext" aria-label="Next image">&#8594;</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       const CATEGORIES = [
         {
@@ -1361,17 +1523,19 @@
         },
       ];
       /* ---------------- Supabase config — fill these in from your project ---------------- */
-      const SUPABASE_URL ="https://rhihavyncjuxijoeiwqf.supabase.co";
-      const SUPABASE_ANON_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoaWhhdnluY2p1eGlqb2Vpd3FmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5Mzk0NzMsImV4cCI6MjEwMjUxNTQ3M30.NovkrkOiiaGp15JEybmkR6CnDGlUAAAc4w_vyRBALiw";
+      const SUPABASE_URL = "https://rhihavyncjuxijoeiwqf.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoaWhhdnluY2p1eGlqb2Vpd3FmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5Mzk0NzMsImV4cCI6MjEwMjUxNTQ3M30.NovkrkOiiaGp15JEybmkR6CnDGlUAAAc4w_vyRBALiw";
       const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       const PHOTO_BUCKET = "report-photos";
+      const MAX_PHOTOS = 5;
 
       let reports = [];
       let reviews = {};
       let currentUser = null;
       let selectedCategories = [];
       let selectedSeverity = null;
-      let pendingPhoto = null;
+      let pendingPhotos = []; // Array of { id: string, dataUrl: string }
       let currentFilter = "all";
       let reviewDraftStars = {};
 
@@ -1399,8 +1563,6 @@
         d.textContent = str;
         return d.innerHTML;
       }
-
-      /* password hashing is now handled server-side by Supabase Auth — no client-side hashing needed */
 
       /* ---------------- category & severity pickers ---------------- */
       const catGrid = document.getElementById("catGrid");
@@ -1435,23 +1597,101 @@
         });
       });
 
-      /* ---------------- photo handling ---------------- */
+      /* ---------------- multi-photo handling & previews ---------------- */
       const photoDrop = document.getElementById("photoDrop");
       const photoInput = document.getElementById("photoInput");
       const photoPreview = document.getElementById("photoPreview");
+      const photoDropText = document.getElementById("photoDropText");
+
       photoDrop.addEventListener("click", () => photoInput.click());
-      photoInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        try {
-          pendingPhoto = await resizeImage(file, 480);
-          photoPreview.innerHTML = `<img src="${pendingPhoto}" alt="Attached photo preview">`;
-        } catch (err) {
-          console.error("Photo processing error:", err);
-          photoDrop.querySelector(".txt").textContent =
-            "Couldn't read that photo — try another.";
+
+      // Drag and drop events
+      ["dragenter", "dragover"].forEach((eventName) => {
+        photoDrop.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          photoDrop.classList.add("dragover");
+        });
+      });
+      ["dragleave", "drop"].forEach((eventName) => {
+        photoDrop.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          photoDrop.classList.remove("dragover");
+        });
+      });
+      photoDrop.addEventListener("drop", async (e) => {
+        const files = Array.from(e.dataTransfer.files).filter((f) =>
+          f.type.startsWith("image/"),
+        );
+        if (files.length > 0) {
+          await handleFiles(files);
         }
       });
+
+      photoInput.addEventListener("change", async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        await handleFiles(files);
+        photoInput.value = ""; // Reset input so same file can be re-selected if removed
+      });
+
+      async function handleFiles(files) {
+        const remainingSlots = MAX_PHOTOS - pendingPhotos.length;
+        if (remainingSlots <= 0) {
+          alert(`You can upload a maximum of ${MAX_PHOTOS} photos.`);
+          return;
+        }
+
+        const filesToProcess = files.slice(0, remainingSlots);
+        if (files.length > remainingSlots) {
+          alert(
+            `Only ${remainingSlots} more photo(s) added (limit: ${MAX_PHOTOS}).`,
+          );
+        }
+
+        photoDropText.textContent = "Processing images…";
+
+        for (const file of filesToProcess) {
+          try {
+            const dataUrl = await resizeImage(file, 800);
+            pendingPhotos.push({
+              id: Math.random().toString(36).slice(2, 9),
+              dataUrl,
+            });
+          } catch (err) {
+            console.error("Photo processing error:", err);
+          }
+        }
+
+        renderPhotoPreviews();
+      }
+
+      function removePendingPhoto(id) {
+        pendingPhotos = pendingPhotos.filter((p) => p.id !== id);
+        renderPhotoPreviews();
+      }
+      window.removePendingPhoto = removePendingPhoto;
+
+      function renderPhotoPreviews() {
+        photoPreview.innerHTML = pendingPhotos
+          .map(
+            (p, idx) => `
+            <div class="photo-thumb-wrap">
+              <img src="${p.dataUrl}" alt="Photo preview ${idx + 1}">
+              <button type="button" class="del-btn" onclick="removePendingPhoto('${p.id}')" title="Remove photo">&times;</button>
+              <span class="idx-badge">${idx + 1}/${MAX_PHOTOS}</span>
+            </div>
+          `,
+          )
+          .join("");
+
+        if (pendingPhotos.length > 0) {
+          photoDropText.textContent = `${pendingPhotos.length}/${MAX_PHOTOS} photo(s) attached — tap to add more`;
+        } else {
+          photoDropText.textContent = "Tap or drop photos to attach";
+        }
+      }
 
       function resizeImage(file, maxDim) {
         return new Promise((resolve, reject) => {
@@ -1464,17 +1704,18 @@
               let w = img.width,
                 h = img.height;
               if (w > h && w > maxDim) {
-                h = h * (maxDim / w);
+                h = Math.round(h * (maxDim / w));
                 w = maxDim;
               } else if (h > maxDim) {
-                w = w * (maxDim / h);
+                w = Math.round(w * (maxDim / h));
                 h = maxDim;
               }
               const canvas = document.createElement("canvas");
               canvas.width = w;
               canvas.height = h;
-              canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-              resolve(canvas.toDataURL("image/jpeg", 0.6));
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0, w, h);
+              resolve(canvas.toDataURL("image/jpeg", 0.75));
             };
             img.src = ev.target.result;
           };
@@ -1490,6 +1731,100 @@
         for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
         return new Blob([arr], { type: mime });
       }
+
+      /* Helper to parse photo URLs from string / json / array */
+      function parsePhotos(photoData) {
+        if (!photoData) return [];
+        if (Array.isArray(photoData)) return photoData;
+        if (typeof photoData === "string") {
+          const trimmed = photoData.trim();
+          if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (Array.isArray(parsed)) return parsed.filter(Boolean);
+            } catch (e) {}
+          }
+          if (trimmed.includes(",")) {
+            return trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+          }
+          return [trimmed];
+        }
+        return [];
+      }
+
+      /* ---------------- Lightbox functionality ---------------- */
+      let lightboxPhotos = [];
+      let lightboxIndex = 0;
+      const lightboxBackdrop = document.getElementById("lightboxBackdrop");
+      const lightboxImg = document.getElementById("lightboxImg");
+      const lightboxCounter = document.getElementById("lightboxCounter");
+      const lightboxPrev = document.getElementById("lightboxPrev");
+      const lightboxNext = document.getElementById("lightboxNext");
+
+      function openLightbox(photos, index = 0) {
+        if (!photos || photos.length === 0) return;
+        lightboxPhotos = photos;
+        lightboxIndex = index;
+        updateLightboxView();
+        lightboxBackdrop.classList.add("show");
+      }
+      window.openLightbox = openLightbox;
+
+      function closeLightboxFn() {
+        lightboxBackdrop.classList.remove("show");
+      }
+      document
+        .getElementById("closeLightbox")
+        .addEventListener("click", closeLightboxFn);
+      lightboxBackdrop.addEventListener("click", (e) => {
+        if (e.target === lightboxBackdrop) closeLightboxFn();
+      });
+
+      function updateLightboxView() {
+        lightboxImg.src = lightboxPhotos[lightboxIndex];
+        lightboxCounter.textContent = `${lightboxIndex + 1} / ${lightboxPhotos.length}`;
+        lightboxPrev.style.visibility =
+          lightboxPhotos.length > 1 ? "visible" : "hidden";
+        lightboxNext.style.visibility =
+          lightboxPhotos.length > 1 ? "visible" : "hidden";
+      }
+
+      lightboxPrev.addEventListener("click", () => {
+        lightboxIndex =
+          (lightboxIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length;
+        updateLightboxView();
+      });
+
+      lightboxNext.addEventListener("click", () => {
+        lightboxIndex = (lightboxIndex + 1) % lightboxPhotos.length;
+        updateLightboxView();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (!lightboxBackdrop.classList.contains("show")) return;
+        if (e.key === "Escape") closeLightboxFn();
+        if (e.key === "ArrowLeft") lightboxPrev.click();
+        if (e.key === "ArrowRight") lightboxNext.click();
+      });
+
+      /* Switch active thumbnail in card gallery */
+      function setCardMainPhoto(cardId, photoUrl, photoIndex, totalCount) {
+        const mainImg = document.getElementById(`mainImg-${cardId}`);
+        if (mainImg) {
+          mainImg.src = photoUrl;
+          mainImg.onclick = () => {
+            const report = reports.find((r) => r.id === cardId);
+            if (report) openLightbox(report.photos, photoIndex);
+          };
+        }
+        const cardElem = mainImg?.closest(".ticket-card");
+        if (cardElem) {
+          cardElem.querySelectorAll(".tc-thumb-item").forEach((thumb, idx) => {
+            thumb.classList.toggle("active", idx === photoIndex);
+          });
+        }
+      }
+      window.setCardMainPhoto = setCardMainPhoto;
 
       /* ---------------- data loading (Supabase) ---------------- */
       async function loadAll() {
@@ -1524,20 +1859,24 @@
 
           if (reportsRes.error)
             console.error("Load reports error:", reportsRes.error);
-          reports = (reportsRes.data || []).map((r) => ({
-            id: r.id,
-            category: r.category,
-            categoryLabel: r.category_label,
-            categoryIcon: r.category_icon,
-            location: r.location,
-            description: r.description,
-            severity: r.severity,
-            photo: r.photo_url,
-            status: r.status,
-            createdAt: new Date(r.created_at).getTime(),
-            authorId: r.author_id,
-            authorName: r.author_name,
-          }));
+          reports = (reportsRes.data || []).map((r) => {
+            const photosList = parsePhotos(r.photo_url || r.photo_urls || r.photos);
+            return {
+              id: r.id,
+              category: r.category,
+              categoryLabel: r.category_label,
+              categoryIcon: r.category_icon,
+              location: r.location,
+              description: r.description,
+              severity: r.severity,
+              photos: photosList,
+              photo: photosList[0] || null,
+              status: r.status,
+              createdAt: new Date(r.created_at).getTime(),
+              authorId: r.author_id,
+              authorName: r.author_name,
+            };
+          });
 
           if (reviewsRes.error)
             console.error("Load reviews error:", reviewsRes.error);
@@ -1707,7 +2046,7 @@
           }
         });
 
-      /* ---------------- report submission ---------------- */
+      /* ---------------- report submission with multi-photo upload ---------------- */
       document
         .getElementById("reportForm")
         .addEventListener("submit", async (e) => {
@@ -1732,24 +2071,35 @@
           submitBtn.textContent = "Submitting…";
 
           try {
-            let photoUrl = null;
-            if (pendingPhoto) {
-              const blob = dataURLtoBlob(pendingPhoto);
-              const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-              const { error: upErr } = await sb.storage
-                .from(PHOTO_BUCKET)
-                .upload(path, blob, { contentType: "image/jpeg" });
-              if (upErr) {
-                console.error("Photo upload error:", upErr);
-              } else {
-                photoUrl = sb.storage.from(PHOTO_BUCKET).getPublicUrl(path)
-                  .data.publicUrl;
+            const uploadedUrls = [];
+            if (pendingPhotos.length > 0) {
+              submitBtn.textContent = `Uploading photos (0/${pendingPhotos.length})…`;
+              
+              for (let i = 0; i < pendingPhotos.length; i++) {
+                const photo = pendingPhotos[i];
+                submitBtn.textContent = `Uploading photos (${i + 1}/${pendingPhotos.length})…`;
+                const blob = dataURLtoBlob(photo.dataUrl);
+                const path = `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+                const { error: upErr } = await sb.storage
+                  .from(PHOTO_BUCKET)
+                  .upload(path, blob, { contentType: "image/jpeg" });
+                if (upErr) {
+                  console.error("Photo upload error:", upErr);
+                } else {
+                  const pubUrl = sb.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
+                  uploadedUrls.push(pubUrl);
+                }
               }
             }
 
             const catInfos = selectedCategories.map((id) =>
               CATEGORIES.find((c) => c.id === id),
             );
+
+            // Store JSON array string or comma separated format for photo_url for full DB compatibility
+            const photoUrlValue =
+              uploadedUrls.length > 0 ? JSON.stringify(uploadedUrls) : null;
+
             const { data, error } = await sb
               .from("reports")
               .insert({
@@ -1759,7 +2109,7 @@
                 location,
                 description,
                 severity: selectedSeverity,
-                photo_url: photoUrl,
+                photo_url: photoUrlValue,
                 status: "Submitted",
                 author_id: currentUser ? currentUser.id : null,
                 author_name: currentUser ? currentUser.name : "Guest",
@@ -1772,6 +2122,8 @@
               return;
             }
 
+            const reportPhotos = parsePhotos(data.photo_url || uploadedUrls);
+
             reports.unshift({
               id: data.id,
               category: data.category,
@@ -1780,7 +2132,8 @@
               location: data.location,
               description: data.description,
               severity: data.severity,
-              photo: data.photo_url,
+              photos: reportPhotos,
+              photo: reportPhotos[0] || null,
               status: data.status,
               createdAt: new Date(data.created_at).getTime(),
               authorId: data.author_id,
@@ -1796,8 +2149,8 @@
               .forEach((b) => b.classList.remove("active"));
             selectedCategories = [];
             selectedSeverity = null;
-            pendingPhoto = null;
-            photoPreview.innerHTML = "";
+            pendingPhotos = [];
+            renderPhotoPreviews();
             document.getElementById("category").value = "";
             document.getElementById("severity").value = "";
 
@@ -1950,6 +2303,34 @@
         return html;
       }
 
+      /* Helper to build gallery HTML for ticket card */
+      function buildCardGalleryHtml(report) {
+        const photos = report.photos || [];
+        if (photos.length === 0) return "";
+        if (photos.length === 1) {
+          return `<img class="tc-photo-main" src="${photos[0]}" alt="Photo of reported issue" onclick="openLightbox(['${photos[0]}'], 0)">`;
+        }
+
+        // Multiple photos: Main active photo + clickable thumbnails row
+        const escapedPhotosJson = JSON.stringify(photos).replace(/"/g, "&quot;");
+        return `
+          <div class="tc-gallery">
+            <img class="tc-photo-main" id="mainImg-${report.id}" src="${photos[0]}" alt="Photo of reported issue" onclick="openLightbox(${escapedPhotosJson}, 0)">
+            <div class="tc-thumbs-row">
+              ${photos
+                .map(
+                  (p, idx) => `
+                <div class="tc-thumb-item ${idx === 0 ? "active" : ""}" onclick="setCardMainPhoto('${report.id}', '${p}', ${idx}, ${photos.length})">
+                  <img src="${p}" alt="Thumbnail ${idx + 1}">
+                </div>
+              `,
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+      }
+
       /* ---------------- main render ---------------- */
       function render() {
         const total = reports.length;
@@ -2002,7 +2383,7 @@
         <span class="badge ${r.status.replace(" ", "")}">${r.status}</span>
       </div>
       <div class="tc-loc"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>${escapeHtml(r.location)}</div>
-      ${r.photo ? `<img class="tc-photo" src="${r.photo}" alt="Photo of reported issue">` : ""}
+      ${buildCardGalleryHtml(r)}
       <div class="tc-desc">${escapeHtml(r.description)}</div>
       <div class="tc-author">Filed by ${escapeHtml(r.authorName || "Guest")}</div>
       <div class="tc-bottom">
