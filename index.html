@@ -142,7 +142,7 @@
         margin-top: 3px;
       }
 
-      /* View Mode Toggle (Citizen Portal vs Command Center) */
+      /* View Mode Toggle */
       .view-switcher {
         display: flex;
         background: #091719;
@@ -172,6 +172,10 @@
       .view-switch-btn svg {
         width: 14px;
         height: 14px;
+      }
+      .view-switch-btn.mgmt-locked {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
 
       .header-actions {
@@ -209,7 +213,7 @@
       .user-chip {
         display: flex;
         align-items: center;
-        gap: 9px;
+        gap: 8px;
         background: #2b2f36;
         border: 1px solid #3b404a;
         padding: 4px 14px 4px 4px;
@@ -228,6 +232,16 @@
         font-weight: 700;
         flex-shrink: 0;
         font-family: "JetBrains Mono", monospace;
+      }
+      .user-chip .role-tag {
+        font-size: 9.5px;
+        font-family: "JetBrains Mono", monospace;
+        background: var(--yellow);
+        color: #122b2e;
+        padding: 1px 5px;
+        border-radius: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
       }
       .user-chip .name {
         font-size: 12.5px;
@@ -660,7 +674,7 @@
         border-radius: 3px;
       }
 
-      /* AI Spam Analysis Banner in Form */
+      /* AI Status Box in Form */
       .ai-status-box {
         display: none;
         align-items: center;
@@ -979,13 +993,19 @@
         color: var(--slate);
         transition: all 0.15s ease;
       }
-      .tc-actions button.resolve:hover {
-        border-color: var(--green);
-        color: var(--green);
-      }
       .tc-actions button.withdraw:hover {
         border-color: var(--red);
         color: var(--red);
+      }
+
+      /* Citizen Review Notice */
+      .citizen-status-notice {
+        font-size: 11px;
+        font-style: italic;
+        color: var(--slate);
+        border-top: 1px dashed var(--line);
+        padding-top: 8px;
+        margin-top: 4px;
       }
 
       /* ---------- Command Center View ---------- */
@@ -1126,7 +1146,7 @@
       }
       .cmd-feed-actions {
         display: flex;
-        gap: 6px;
+        gap: 5px;
         margin-top: 4px;
         flex-wrap: wrap;
       }
@@ -1137,6 +1157,20 @@
         border-radius: 4px;
         border: 1px solid #c9c2af;
         background: #fff;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .cmd-action-btn.resolve {
+        color: var(--green);
+        border-color: var(--green);
+      }
+      .cmd-action-btn.review {
+        color: #7a5b00;
+        border-color: var(--yellow);
+      }
+      .cmd-action-btn.reopen {
+        color: var(--slate);
+        border-color: #c9c2af;
       }
       .cmd-action-btn.verify {
         color: var(--green);
@@ -1146,9 +1180,32 @@
         color: var(--red);
         border-color: var(--red);
       }
-      .cmd-action-btn.dispatch {
-        color: var(--orange-dark);
-        border-color: var(--orange);
+
+      /* Management Access Denied Banner */
+      .mgmt-locked-screen {
+        display: none;
+        max-width: 600px;
+        margin: 60px auto;
+        background: var(--paper);
+        border: 1px solid var(--asphalt);
+        border-radius: 8px;
+        padding: 36px 30px;
+        text-align: center;
+        box-shadow: 7px 7px 0 var(--asphalt-2);
+      }
+      .mgmt-locked-screen .icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+      }
+      .mgmt-locked-screen h2 {
+        font-size: 24px;
+        margin: 0 0 10px;
+      }
+      .mgmt-locked-screen p {
+        font-size: 14px;
+        color: var(--slate);
+        line-height: 1.5;
+        margin: 0 0 20px;
       }
 
       /* Lightbox Modal */
@@ -1236,7 +1293,7 @@
       .modal {
         background: var(--paper);
         border-radius: 10px;
-        max-width: 400px;
+        max-width: 420px;
         width: 100%;
         padding: 28px 26px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -1433,8 +1490,8 @@
         </div>
       </div>
 
-      <!-- View Switcher -->
-      <div class="view-switcher">
+      <!-- View Switcher (Citizen Portal vs Command Center) -->
+      <div class="view-switcher" id="viewSwitcherWrap">
         <button
           type="button"
           class="view-switch-btn active"
@@ -1450,7 +1507,11 @@
           </svg>
           Citizen Portal
         </button>
-        <button type="button" class="view-switch-btn" id="btnCommandView">
+        <button
+          type="button"
+          class="view-switch-btn"
+          id="btnCommandView"
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -1461,7 +1522,7 @@
             <line x1="8" y1="21" x2="16" y2="21" />
             <line x1="12" y1="17" x2="12" y2="21" />
           </svg>
-          Command Center
+          Command Center 🔒
         </button>
       </div>
 
@@ -1484,7 +1545,7 @@
           <p class="lede">
             Report potholes, road damage, blocked drains, or streetlight
             failures with real-time GPS location and AI photo verification.
-            Track your report through resolution.
+            Municipal works teams will inspect and resolve your report.
           </p>
           <div class="stat-row">
             <div class="stat">
@@ -1664,7 +1725,7 @@
       </section>
     </div>
 
-    <!-- ================= COMMAND CENTER VIEW ================= -->
+    <!-- ================= COMMAND CENTER VIEW (MANAGEMENT ONLY) ================= -->
     <div class="command-view" id="commandView">
       <div class="cmd-header">
         <h2>
@@ -1716,7 +1777,7 @@
 
         <div class="cmd-list-card">
           <div class="cmd-card-head">
-            <span>📋 Live Dispatch Feed & AI Quarantine</span>
+            <span>📋 Management Work Orders & AI Dispatch</span>
             <span id="cmdFeedCount" style="font-size: 11px; opacity: 0.8"
               >0 tickets</span
             >
@@ -1724,6 +1785,20 @@
           <div class="cmd-feed" id="cmdFeed"></div>
         </div>
       </div>
+    </div>
+
+    <!-- Management Access Restricted Notice -->
+    <div class="mgmt-locked-screen" id="mgmtLockedScreen">
+      <div class="icon">🔒</div>
+      <h2>Municipal Access Restricted</h2>
+      <p>
+        The Command Center is reserved exclusively for Municipal Management and
+        Field Dispatch Staff to inspect live map data, manage work orders, and
+        resolve tickets.
+      </p>
+      <button class="auth-btn" id="btnMgmtLoginPrompt" type="button">
+        Sign in with Management Account
+      </button>
     </div>
 
     <!-- Lightbox Modal -->
@@ -1772,7 +1847,7 @@
         <div id="loginPane">
           <h3>Welcome back</h3>
           <p class="sub-txt">
-            Sign in to track your reports and leave reviews.
+            Sign in to track reports or access management dispatch.
           </p>
           <div class="field">
             <label for="loginEmail">Email</label
@@ -1829,6 +1904,20 @@
               placeholder="e.g. Ward 12, Riverside"
             />
           </div>
+          <!-- Staff Management Passcode (Optional) -->
+          <div class="field">
+            <label for="regStaffCode"
+              >Municipal Staff Passcode
+              <span style="font-weight: 400; text-transform: none; color: var(--slate);"
+                >(for management staff)</span
+              ></label
+            >
+            <input
+              type="password"
+              id="regStaffCode"
+              placeholder="Optional: enter staff code for Command Access"
+            />
+          </div>
           <button class="submit-btn" id="registerSubmit" type="button">
             Create profile
           </button>
@@ -1841,8 +1930,7 @@
     </div>
 
     <footer>
-      munciPAL &middot; AI-Powered Civic Issue Reporting & Municipal Command
-      Center
+      munciPAL &middot; AI-Powered Civic Reporting & Municipal Command Center
     </footer>
 
     <script>
@@ -1904,6 +1992,7 @@
       const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       const PHOTO_BUCKET = "report-photos";
       const MAX_PHOTOS = 5;
+      const MUNICIPAL_STAFF_SECRET = "ADMIN2026"; // Passcode for staff role
 
       let reports = [];
       let reviews = {};
@@ -1921,7 +2010,6 @@
       let cityMap = null;
       let cityMarkersLayer = null;
 
-      // Default City Coordinates (e.g. downtown)
       const DEFAULT_LAT = 28.6139;
       const DEFAULT_LNG = 77.209;
 
@@ -1929,6 +2017,17 @@
         '<svg viewBox="0 0 20 20" class="star-fill"><path d="M10 1.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z"/></svg>';
       const STAR_EMPTY =
         '<svg viewBox="0 0 20 20" class="star-empty" stroke-width="1.3"><path d="M10 1.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z"/></svg>';
+
+      function isManagement(user) {
+        if (!user) return false;
+        return (
+          user.role === "management" ||
+          user.role === "admin" ||
+          user.email?.endsWith("@municipality.gov") ||
+          user.email?.includes("admin") ||
+          localStorage.getItem("munciPAL_staff_override") === "true"
+        );
+      }
 
       function starsHtml(rating) {
         let out = `<span class="stars">`;
@@ -1950,22 +2049,18 @@
         return d.innerHTML;
       }
 
-      /* ---------------- AI Spam & Photo Relevance Detector ---------------- */
+      /* ---------------- AI Spam & Photo Detector ---------------- */
       class AISpamDetector {
-        // Multi-modal heuristic and vision analyzer
         static async analyzeReport(text, description, photos) {
           let spamScore = 0;
           const reasons = [];
-
           const fullText = (text + " " + description).toLowerCase().trim();
 
-          // 1. Text checks
           if (fullText.length < 10) {
             spamScore += 45;
             reasons.push("Description too brief");
           }
 
-          // Check for repetitive characters or keyboard smash (e.g. asdfasdf, aaaaa, 12345)
           if (
             /(.)\1{4,}/.test(fullText) ||
             /^[asdfghjklqwertyuiopzxcvbnm1234567890\s]+$/i.test(fullText) &&
@@ -1981,7 +2076,6 @@
             }
           }
 
-          // Spam / promotional keywords
           const spamKeywords = [
             "casino",
             "viagra",
@@ -2000,7 +2094,6 @@
             }
           }
 
-          // 2. Photo Vision analysis (Canvas inspection of luminosity, edge density, and variance)
           if (photos && photos.length > 0) {
             for (let i = 0; i < photos.length; i++) {
               const photoAnalysis = await this.analyzeImage(photos[i].dataUrl);
@@ -2046,15 +2139,12 @@
                 totalBrightness += b;
                 if (b < minB) minB = b;
                 if (b > maxB) maxB = b;
-                // Quantized color bucket
                 const key = `${Math.floor(d[i] / 32)},${Math.floor(d[i + 1] / 32)},${Math.floor(d[i + 2] / 32)}`;
                 colorBuckets.add(key);
               }
 
               const avgBrightness = totalBrightness / (64 * 64);
               const variance = maxB - minB;
-
-              // Solid blank or dark screen test
               const isBlank =
                 variance < 15 || avgBrightness < 10 || avgBrightness > 245;
               const isExtremeLowQuality = colorBuckets.size < 4;
@@ -2072,17 +2162,19 @@
         }
       }
 
-      /* ---------------- View Mode Switcher ---------------- */
+      /* ---------------- View Mode Switcher with RBAC ---------------- */
       const btnCitizenView = document.getElementById("btnCitizenView");
       const btnCommandView = document.getElementById("btnCommandView");
       const citizenView = document.getElementById("citizenView");
       const commandView = document.getElementById("commandView");
+      const mgmtLockedScreen = document.getElementById("mgmtLockedScreen");
 
       btnCitizenView.addEventListener("click", () => {
         btnCitizenView.classList.add("active");
         btnCommandView.classList.remove("active");
         citizenView.style.display = "block";
         commandView.style.display = "none";
+        mgmtLockedScreen.style.display = "none";
         setTimeout(() => formMap && formMap.invalidateSize(), 200);
       });
 
@@ -2090,10 +2182,23 @@
         btnCommandView.classList.add("active");
         btnCitizenView.classList.remove("active");
         citizenView.style.display = "none";
-        commandView.style.display = "block";
-        initCityMap();
-        setTimeout(() => cityMap && cityMap.invalidateSize(), 200);
+
+        if (isManagement(currentUser)) {
+          commandView.style.display = "block";
+          mgmtLockedScreen.style.display = "none";
+          initCityMap();
+          setTimeout(() => cityMap && cityMap.invalidateSize(), 200);
+        } else {
+          commandView.style.display = "none";
+          mgmtLockedScreen.style.display = "block";
+        }
       });
+
+      document
+        .getElementById("btnMgmtLoginPrompt")
+        .addEventListener("click", () => {
+          openModal("login");
+        });
 
       /* ---------------- Form Map & GPS Integration ---------------- */
       function initFormMap(lat = DEFAULT_LAT, lng = DEFAULT_LNG) {
@@ -2109,7 +2214,6 @@
         ).addTo(formMap);
 
         formMarker = L.marker([lat, lng], { draggable: true }).addTo(formMap);
-
         document.getElementById("latitude").value = lat;
         document.getElementById("longitude").value = lng;
 
@@ -2142,7 +2246,6 @@
         }
       }
 
-      // Detect GPS button
       document.getElementById("btnGps").addEventListener("click", () => {
         if (!navigator.geolocation) {
           alert("Geolocation is not supported by your browser.");
@@ -2161,8 +2264,7 @@
             gpsBtn.innerHTML = `📍 GPS Active`;
           },
           (err) => {
-            console.error("GPS error:", err);
-            alert("Could not access GPS. Please allow location permissions.");
+            alert("Could not access GPS. Please enable location permissions.");
             gpsBtn.textContent = "Detect GPS";
           },
           { enableHighAccuracy: true, timeout: 8000 },
@@ -2202,7 +2304,7 @@
         });
       });
 
-      /* ---------------- Multi-Photo Handling & Previews ---------------- */
+      /* ---------------- Multi-Photo Handling ---------------- */
       const photoDrop = document.getElementById("photoDrop");
       const photoInput = document.getElementById("photoInput");
       const photoPreview = document.getElementById("photoPreview");
@@ -2255,7 +2357,7 @@
               dataUrl,
             });
           } catch (err) {
-            console.error("Photo processing error:", err);
+            console.error("Photo error:", err);
           }
         }
 
@@ -2442,8 +2544,13 @@
       }
       window.setCardMainPhoto = setCardMainPhoto;
 
-      /* ---------------- Profile sync helper ---------------- */
-      async function syncProfile(user, fallbackName = "", fallbackArea = "") {
+      /* ---------------- Profile sync helper with Role Support ---------------- */
+      async function syncProfile(
+        user,
+        fallbackName = "",
+        fallbackArea = "",
+        fallbackRole = "citizen",
+      ) {
         if (!user) return null;
         try {
           const { data: profile } = await sb
@@ -2452,7 +2559,12 @@
             .eq("id", user.id)
             .maybeSingle();
 
-          if (profile && profile.name) return profile;
+          if (profile && profile.name) {
+            return {
+              ...profile,
+              role: profile.role || user.user_metadata?.role || "citizen",
+            };
+          }
 
           const nameToSave =
             fallbackName ||
@@ -2460,11 +2572,13 @@
             user.email?.split("@")[0] ||
             "User";
           const areaToSave = fallbackArea || user.user_metadata?.area || "";
+          const roleToSave =
+            fallbackRole || user.user_metadata?.role || "citizen";
 
           const { data: insertedProf, error: insErr } = await sb
             .from("profiles")
             .upsert(
-              { id: user.id, name: nameToSave, area: areaToSave },
+              { id: user.id, name: nameToSave, area: areaToSave, role: roleToSave },
               { onConflict: "id" },
             )
             .select()
@@ -2472,13 +2586,19 @@
 
           if (insErr) console.warn("Profile sync note:", insErr.message);
           return (
-            insertedProf || { id: user.id, name: nameToSave, area: areaToSave }
+            insertedProf || {
+              id: user.id,
+              name: nameToSave,
+              area: areaToSave,
+              role: roleToSave,
+            }
           );
         } catch (err) {
           return {
             id: user.id,
             name: fallbackName || user.user_metadata?.name || user.email,
             area: fallbackArea || user.user_metadata?.area || "",
+            role: fallbackRole || user.user_metadata?.role || "citizen",
           };
         }
       }
@@ -2496,6 +2616,7 @@
               email: session.user.email,
               name: profile?.name || session.user.email,
               area: profile?.area || "",
+              role: profile?.role || "citizen",
             };
           }
 
@@ -2591,14 +2712,12 @@
           submitBtn.textContent = "AI Scanning report…";
 
           try {
-            // 1. Run AI Spam & Quality Evaluation
             const aiResult = await AISpamDetector.analyzeReport(
               location,
               description,
               pendingPhotos,
             );
 
-            // 2. Upload photos to Supabase Storage
             const uploadedUrls = [];
             if (pendingPhotos.length > 0) {
               for (let i = 0; i < pendingPhotos.length; i++) {
@@ -2624,7 +2743,6 @@
             const photoUrlValue =
               uploadedUrls.length > 0 ? JSON.stringify(uploadedUrls) : null;
 
-            // 3. Save report to DB with GPS coordinates and AI spam rating
             const { data, error } = await sb
               .from("reports")
               .insert({
@@ -2704,7 +2822,7 @@
           }
         });
 
-      /* ---------------- Command Center Operations ---------------- */
+      /* ---------------- Command Center Operations (Management Only) ---------------- */
       function initCityMap() {
         if (!cityMap) {
           cityMap = L.map("cityMap").setView([DEFAULT_LAT, DEFAULT_LNG], 13);
@@ -2807,6 +2925,7 @@
           return;
         }
 
+        // Management Dispatch Actions: Mark In Review, Mark Resolved, Reopen, Flag/Unflag Spam
         feedEl.innerHTML = list
           .map(
             (r) => `
@@ -2825,8 +2944,9 @@
               <div class="cmd-feed-actions">
                 ${
                   r.status !== "Resolved"
-                    ? `<button type="button" class="cmd-action-btn dispatch" onclick="setStatus('${r.id}','Resolved')">✓ Resolve</button>`
-                    : `<button type="button" class="cmd-action-btn" onclick="setStatus('${r.id}','Submitted')">Reopen</button>`
+                    ? `<button type="button" class="cmd-action-btn resolve" onclick="managementSetStatus('${r.id}','Resolved')">✓ Mark Resolved</button>
+                       ${r.status !== "InReview" ? `<button type="button" class="cmd-action-btn review" onclick="managementSetStatus('${r.id}','InReview')">⏳ Mark In Review</button>` : ""}`
+                    : `<button type="button" class="cmd-action-btn reopen" onclick="managementSetStatus('${r.id}','Submitted')">↺ Reopen Ticket</button>`
                 }
                 ${
                   r.spamStatus === "spam_flagged"
@@ -2843,7 +2963,33 @@
         updateCommandMapMarkers();
       }
 
+      /* Management Only Status Changer */
+      async function managementSetStatus(id, status) {
+        if (!isManagement(currentUser)) {
+          alert("Unauthorized: Only Municipal Management can change ticket status.");
+          return;
+        }
+        const r = reports.find((item) => item.id === id);
+        if (!r) return;
+        const { error } = await sb
+          .from("reports")
+          .update({ status })
+          .eq("id", id);
+        if (error) {
+          alert("Could not update status: " + error.message);
+          return;
+        }
+        r.status = status;
+        render();
+        updateCommandCenter();
+      }
+      window.managementSetStatus = managementSetStatus;
+
       async function setSpamStatus(id, spamStatus) {
+        if (!isManagement(currentUser)) {
+          alert("Unauthorized: Only Municipal Management can alter spam classifications.");
+          return;
+        }
         const r = reports.find((item) => item.id === id);
         if (!r) return;
         r.spamStatus = spamStatus;
@@ -2871,22 +3017,7 @@
         updateCommandCenter();
       });
 
-      /* ---------------- Ticket Actions & Reviews ---------------- */
-      async function setStatus(id, status) {
-        const r = reports.find((r) => r.id === id);
-        if (!r) return;
-        const { error } = await sb
-          .from("reports")
-          .update({ status })
-          .eq("id", id);
-        if (error) {
-          alert("Could not update status: " + error.message);
-          return;
-        }
-        r.status = status;
-        render();
-        updateCommandCenter();
-      }
+      /* ---------------- Citizen Ticket Actions (Withdraw Only) ---------------- */
       async function withdraw(id) {
         if (!confirm("Withdraw this report? This cannot be undone.")) return;
         const { error } = await sb.from("reports").delete().eq("id", id);
@@ -2898,9 +3029,9 @@
         render();
         updateCommandCenter();
       }
-      window.setStatus = setStatus;
       window.withdraw = withdraw;
 
+      /* ---------------- Reviews (Only on Resolved Tickets) ---------------- */
       function setDraftStars(reportId, n) {
         reviewDraftStars[reportId] = n;
         const wrap = document.getElementById("starInput-" + reportId);
@@ -2917,6 +3048,12 @@
       }
 
       async function submitReview(reportId) {
+        const report = reports.find((r) => r.id === reportId);
+        if (report && report.status !== "Resolved") {
+          alert("Reviews can only be submitted once management resolves the issue.");
+          return;
+        }
+
         const rating = reviewDraftStars[reportId] || 0;
         const textEl = document.getElementById("reviewText-" + reportId);
         const comment = textEl ? textEl.value.trim() : "";
@@ -2982,10 +3119,12 @@
           if (!already) {
             html += `<div class="review-form">
         <div class="star-input" id="starInput-${report.id}">${buildStarInput(report.id, reviewDraftStars[report.id] || 0)}</div>
-        <textarea id="reviewText-${report.id}" placeholder="How did the fix go?"></textarea>
-        <button type="button" class="rv-submit" onclick="submitReview('${report.id}')">Post review</button>
+        <textarea id="reviewText-${report.id}" placeholder="How did the municipal fix go?"></textarea>
+        <button type="button" class="rv-submit" onclick="submitReview('${report.id}')">Post citizen review</button>
       </div>`;
           }
+        } else {
+          html += `<p class="review-locked">Sign in to leave a review.</p>`;
         }
         html += `</div>`;
         return html;
@@ -3016,7 +3155,7 @@
         `;
       }
 
-      /* ---------------- Auth UI ---------------- */
+      /* ---------------- Auth UI & Role Handling ---------------- */
       const authBackdrop = document.getElementById("authBackdrop");
       const tabLogin = document.getElementById("tabLogin");
       const tabRegister = document.getElementById("tabRegister");
@@ -3026,19 +3165,54 @@
       function renderAuthArea() {
         const area = document.getElementById("authArea");
         const mineBtn = document.getElementById("mineFilterBtn");
+        const btnCmd = document.getElementById("btnCommandView");
+
         if (currentUser) {
-          area.innerHTML = `<div class="user-chip"><span class="avatar">${initials(currentUser.name)}</span><span class="name">${escapeHtml(currentUser.name)}</span><button id="signOutBtn">Sign out</button></div>`;
+          const isMgmt = isManagement(currentUser);
+          area.innerHTML = `
+            <div class="user-chip">
+              <span class="avatar">${initials(currentUser.name)}</span>
+              ${isMgmt ? `<span class="role-tag">STAFF</span>` : ""}
+              <span class="name">${escapeHtml(currentUser.name)}</span>
+              <button id="signOutBtn">Sign out</button>
+            </div>
+          `;
+
+          if (isMgmt) {
+            btnCmd.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+              Command Center
+            `;
+            btnCmd.title = "Municipal Management Command Center";
+          } else {
+            btnCmd.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+              Command Center 🔒
+            `;
+          }
+
           document
             .getElementById("signOutBtn")
             .addEventListener("click", async () => {
               await sb.auth.signOut();
               currentUser = null;
+              localStorage.removeItem("munciPAL_staff_override");
               renderAuthArea();
               if (currentFilter === "mine") currentFilter = "all";
+              btnCitizenView.click();
               render();
             });
+
           document.getElementById("formHint").textContent =
-            `Filing as ${currentUser.name}.`;
+            `Filing as ${currentUser.name}${isMgmt ? " (Municipal Staff)" : ""}.`;
           mineBtn.style.display = "inline-block";
         } else {
           area.innerHTML = `<button class="auth-btn" id="openAuthBtn">Sign in</button>`;
@@ -3048,6 +3222,14 @@
           document.getElementById("formHint").textContent =
             "Signed in as guest — you can still file a report; sign in to track it under your name.";
           mineBtn.style.display = "none";
+          btnCmd.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+            Command Center 🔒
+          `;
         }
       }
 
@@ -3095,10 +3277,14 @@
             email: data.user.email,
             name: profile?.name || data.user.email,
             area: profile?.area || "",
+            role: profile?.role || "citizen",
           };
           closeModalFn();
           renderAuthArea();
           render();
+          if (isManagement(currentUser)) {
+            btnCommandView.click();
+          }
         });
 
       document
@@ -3110,16 +3296,22 @@
           const passwordConfirm =
             document.getElementById("regPasswordConfirm").value;
           const area = document.getElementById("regArea").value.trim();
+          const staffCode = document.getElementById("regStaffCode").value.trim();
 
           if (!name || !email || password !== passwordConfirm) {
             document.getElementById("registerPassErr").classList.add("show");
             return;
           }
 
+          const userRole = staffCode === MUNICIPAL_STAFF_SECRET ? "management" : "citizen";
+          if (userRole === "management") {
+            localStorage.setItem("munciPAL_staff_override", "true");
+          }
+
           const { data, error } = await sb.auth.signUp({
             email,
             password,
-            options: { data: { name, area } },
+            options: { data: { name, area, role: userRole } },
           });
 
           if (error) {
@@ -3128,13 +3320,13 @@
             return;
           }
 
-          if (data?.user) await syncProfile(data.user, name, area);
+          if (data?.user) await syncProfile(data.user, name, area, userRole);
           closeModalFn();
           renderAuthArea();
           render();
         });
 
-      /* ---------------- Main Ledger Render ---------------- */
+      /* ---------------- Main Ledger Render (Citizen Portal) ---------------- */
       function render() {
         const total = reports.length;
         const resolved = reports.filter((r) => r.status === "Resolved").length;
@@ -3200,13 +3392,16 @@
         ${
           currentUser && currentUser.id === r.authorId
             ? `<div class="tc-actions">
-          ${r.status !== "Resolved" ? `<button class="resolve" onclick="setStatus('${r.id}','Resolved')">Mark resolved</button>` : `<button onclick="setStatus('${r.id}','Submitted')">Reopen</button>`}
-          <button class="withdraw" onclick="withdraw('${r.id}')">Withdraw</button>
+          <button class="withdraw" onclick="withdraw('${r.id}')">Withdraw Report</button>
         </div>`
             : ""
         }
       </div>
-      ${r.status === "Resolved" ? reviewsBlockHtml(r) : ""}
+      ${
+        r.status === "Resolved"
+          ? reviewsBlockHtml(r)
+          : `<div class="citizen-status-notice">⏳ In progress with Municipal Works. Reviews unlock once marked resolved by management.</div>`
+      }
     </div>
   `,
           )
