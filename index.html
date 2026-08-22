@@ -173,10 +173,6 @@
         width: 14px;
         height: 14px;
       }
-      .view-switch-btn.mgmt-locked {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
 
       .header-actions {
         display: flex;
@@ -238,7 +234,7 @@
         font-family: "JetBrains Mono", monospace;
         background: var(--yellow);
         color: #122b2e;
-        padding: 1px 5px;
+        padding: 1px 6px;
         border-radius: 10px;
         font-weight: 700;
         text-transform: uppercase;
@@ -435,6 +431,7 @@
       }
       .field input[type="text"],
       .field input[type="email"],
+      .field input[type="password"],
       .field textarea,
       .field select {
         width: 100%;
@@ -998,7 +995,6 @@
         color: var(--red);
       }
 
-      /* Citizen Review Notice */
       .citizen-status-notice {
         font-size: 11px;
         font-style: italic;
@@ -1107,6 +1103,7 @@
         height: 520px;
         width: 100%;
         background: #cbd5e1;
+        min-height: 400px;
       }
 
       .cmd-list-card {
@@ -1181,31 +1178,45 @@
         border-color: var(--red);
       }
 
-      /* Management Access Denied Banner */
+      /* Management Access Denied Screen */
       .mgmt-locked-screen {
         display: none;
-        max-width: 600px;
-        margin: 60px auto;
+        max-width: 540px;
+        margin: 40px auto;
         background: var(--paper);
         border: 1px solid var(--asphalt);
         border-radius: 8px;
-        padding: 36px 30px;
+        padding: 32px 26px;
         text-align: center;
         box-shadow: 7px 7px 0 var(--asphalt-2);
       }
       .mgmt-locked-screen .icon {
-        font-size: 40px;
-        margin-bottom: 12px;
+        font-size: 38px;
+        margin-bottom: 10px;
       }
       .mgmt-locked-screen h2 {
-        font-size: 24px;
-        margin: 0 0 10px;
+        font-size: 22px;
+        margin: 0 0 8px;
       }
       .mgmt-locked-screen p {
-        font-size: 14px;
+        font-size: 13.5px;
         color: var(--slate);
         line-height: 1.5;
-        margin: 0 0 20px;
+        margin: 0 0 18px;
+      }
+      .mgmt-unlock-box {
+        display: flex;
+        gap: 8px;
+        max-width: 380px;
+        margin: 0 auto;
+      }
+      .mgmt-unlock-box input {
+        flex: 1;
+        padding: 9px 12px;
+        border: 1px solid #c9c2af;
+        border-radius: 5px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
       }
 
       /* Lightbox Modal */
@@ -1787,18 +1798,27 @@
       </div>
     </div>
 
-    <!-- Management Access Restricted Notice -->
+    <!-- Management Access Restricted Screen with Direct Staff Unlock -->
     <div class="mgmt-locked-screen" id="mgmtLockedScreen">
       <div class="icon">🔒</div>
       <h2>Municipal Access Restricted</h2>
       <p>
-        The Command Center is reserved exclusively for Municipal Management and
-        Field Dispatch Staff to inspect live map data, manage work orders, and
-        resolve tickets.
+        The Command Center is reserved for Municipal Management. Enter your
+        Staff Passcode to unlock the operations dashboard.
       </p>
-      <button class="auth-btn" id="btnMgmtLoginPrompt" type="button">
-        Sign in with Management Account
-      </button>
+      <div class="mgmt-unlock-box">
+        <input
+          type="password"
+          id="mgmtDirectCode"
+          placeholder="Enter Passcode (e.g. ADMIN2026)"
+        />
+        <button class="auth-btn" id="btnUnlockCommand" type="button">
+          Unlock
+        </button>
+      </div>
+      <p style="font-size: 11px; color: var(--slate); margin-top: 14px;">
+        Or <a href="#" id="linkMgmtModal" style="color: var(--orange); font-weight: 600;">sign in with your registered account</a>.
+      </p>
     </div>
 
     <!-- Lightbox Modal -->
@@ -1861,6 +1881,20 @@
             <label for="loginPassword">Password</label
             ><input type="password" id="loginPassword" placeholder="••••••••" />
           </div>
+          <!-- Optional Staff Code on Sign In -->
+          <div class="field">
+            <label for="loginStaffCode"
+              >Staff Passcode
+              <span style="font-weight: 400; text-transform: none; color: var(--slate);"
+                >(optional: enter ADMIN2026 for Staff Access)</span
+              ></label
+            >
+            <input
+              type="password"
+              id="loginStaffCode"
+              placeholder="ADMIN2026"
+            />
+          </div>
           <button class="submit-btn" id="loginSubmit" type="button">
             Sign in
           </button>
@@ -1904,18 +1938,18 @@
               placeholder="e.g. Ward 12, Riverside"
             />
           </div>
-          <!-- Staff Management Passcode (Optional) -->
+          <!-- Staff Passcode -->
           <div class="field">
             <label for="regStaffCode"
-              >Municipal Staff Passcode
+              >Staff Passcode
               <span style="font-weight: 400; text-transform: none; color: var(--slate);"
-                >(for management staff)</span
+                >(enter ADMIN2026 for Command Center access)</span
               ></label
             >
             <input
               type="password"
               id="regStaffCode"
-              placeholder="Optional: enter staff code for Command Access"
+              placeholder="ADMIN2026"
             />
           </div>
           <button class="submit-btn" id="registerSubmit" type="button">
@@ -1992,7 +2026,7 @@
       const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       const PHOTO_BUCKET = "report-photos";
       const MAX_PHOTOS = 5;
-      const MUNICIPAL_STAFF_SECRET = "ADMIN2026"; // Passcode for staff role
+      const MUNICIPAL_STAFF_SECRET = "ADMIN2026";
 
       let reports = [];
       let reviews = {};
@@ -2019,13 +2053,13 @@
         '<svg viewBox="0 0 20 20" class="star-empty" stroke-width="1.3"><path d="M10 1.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z"/></svg>';
 
       function isManagement(user) {
+        if (localStorage.getItem("munciPAL_staff_override") === "true") return true;
         if (!user) return false;
         return (
           user.role === "management" ||
           user.role === "admin" ||
           user.email?.endsWith("@municipality.gov") ||
-          user.email?.includes("admin") ||
-          localStorage.getItem("munciPAL_staff_override") === "true"
+          user.email?.toLowerCase().includes("admin")
         );
       }
 
@@ -2169,16 +2203,7 @@
       const commandView = document.getElementById("commandView");
       const mgmtLockedScreen = document.getElementById("mgmtLockedScreen");
 
-      btnCitizenView.addEventListener("click", () => {
-        btnCitizenView.classList.add("active");
-        btnCommandView.classList.remove("active");
-        citizenView.style.display = "block";
-        commandView.style.display = "none";
-        mgmtLockedScreen.style.display = "none";
-        setTimeout(() => formMap && formMap.invalidateSize(), 200);
-      });
-
-      btnCommandView.addEventListener("click", () => {
+      function openCommandCenter() {
         btnCommandView.classList.add("active");
         btnCitizenView.classList.remove("active");
         citizenView.style.display = "none";
@@ -2186,17 +2211,52 @@
         if (isManagement(currentUser)) {
           commandView.style.display = "block";
           mgmtLockedScreen.style.display = "none";
-          initCityMap();
-          setTimeout(() => cityMap && cityMap.invalidateSize(), 200);
+          setTimeout(() => {
+            initCityMap();
+            updateCommandCenter();
+          }, 50);
         } else {
           commandView.style.display = "none";
           mgmtLockedScreen.style.display = "block";
         }
+      }
+
+      btnCitizenView.addEventListener("click", () => {
+        btnCitizenView.classList.add("active");
+        btnCommandView.classList.remove("active");
+        citizenView.style.display = "block";
+        commandView.style.display = "none";
+        mgmtLockedScreen.style.display = "none";
+        setTimeout(() => formMap && formMap.invalidateSize(), 150);
       });
 
+      btnCommandView.addEventListener("click", openCommandCenter);
+
+      // Direct Passcode Unlock Button
       document
-        .getElementById("btnMgmtLoginPrompt")
-        .addEventListener("click", () => {
+        .getElementById("btnUnlockCommand")
+        .addEventListener("click", async () => {
+          const code = document.getElementById("mgmtDirectCode").value.trim();
+          if (code === MUNICIPAL_STAFF_SECRET) {
+            localStorage.setItem("munciPAL_staff_override", "true");
+            if (currentUser) {
+              currentUser.role = "management";
+              await sb
+                .from("profiles")
+                .update({ role: "management" })
+                .eq("id", currentUser.id);
+            }
+            renderAuthArea();
+            openCommandCenter();
+          } else {
+            alert("Incorrect staff passcode. Please try again or use ADMIN2026.");
+          }
+        });
+
+      document
+        .getElementById("linkMgmtModal")
+        .addEventListener("click", (e) => {
+          e.preventDefault();
           openModal("login");
         });
 
@@ -2559,10 +2619,18 @@
             .eq("id", user.id)
             .maybeSingle();
 
+          const resolvedRole =
+            (profile && profile.role) ||
+            user.user_metadata?.role ||
+            fallbackRole ||
+            (localStorage.getItem("munciPAL_staff_override") === "true"
+              ? "management"
+              : "citizen");
+
           if (profile && profile.name) {
             return {
               ...profile,
-              role: profile.role || user.user_metadata?.role || "citizen",
+              role: resolvedRole,
             };
           }
 
@@ -2572,13 +2640,11 @@
             user.email?.split("@")[0] ||
             "User";
           const areaToSave = fallbackArea || user.user_metadata?.area || "";
-          const roleToSave =
-            fallbackRole || user.user_metadata?.role || "citizen";
 
           const { data: insertedProf, error: insErr } = await sb
             .from("profiles")
             .upsert(
-              { id: user.id, name: nameToSave, area: areaToSave, role: roleToSave },
+              { id: user.id, name: nameToSave, area: areaToSave, role: resolvedRole },
               { onConflict: "id" },
             )
             .select()
@@ -2590,7 +2656,7 @@
               id: user.id,
               name: nameToSave,
               area: areaToSave,
-              role: roleToSave,
+              role: resolvedRole,
             }
           );
         } catch (err) {
@@ -2824,6 +2890,9 @@
 
       /* ---------------- Command Center Operations (Management Only) ---------------- */
       function initCityMap() {
+        const mapContainer = document.getElementById("cityMap");
+        if (!mapContainer) return;
+
         if (!cityMap) {
           cityMap = L.map("cityMap").setView([DEFAULT_LAT, DEFAULT_LNG], 13);
           L.tileLayer(
@@ -2836,11 +2905,17 @@
           ).addTo(cityMap);
           cityMarkersLayer = L.layerGroup().addTo(cityMap);
         }
-        updateCommandMapMarkers();
+
+        setTimeout(() => {
+          if (cityMap) {
+            cityMap.invalidateSize();
+            updateCommandMapMarkers();
+          }
+        }, 150);
       }
 
       function updateCommandMapMarkers() {
-        if (!cityMarkersLayer) return;
+        if (!cityMarkersLayer || !cityMap) return;
         cityMarkersLayer.clearLayers();
 
         let list = reports;
@@ -2925,7 +3000,6 @@
           return;
         }
 
-        // Management Dispatch Actions: Mark In Review, Mark Resolved, Reopen, Flag/Unflag Spam
         feedEl.innerHTML = list
           .map(
             (r) => `
@@ -2963,7 +3037,6 @@
         updateCommandMapMarkers();
       }
 
-      /* Management Only Status Changer */
       async function managementSetStatus(id, status) {
         if (!isManagement(currentUser)) {
           alert("Unauthorized: Only Municipal Management can change ticket status.");
@@ -3031,7 +3104,7 @@
       }
       window.withdraw = withdraw;
 
-      /* ---------------- Reviews (Only on Resolved Tickets) ---------------- */
+      /* ---------------- Reviews ---------------- */
       function setDraftStars(reportId, n) {
         reviewDraftStars[reportId] = n;
         const wrap = document.getElementById("starInput-" + reportId);
@@ -3155,7 +3228,7 @@
         `;
       }
 
-      /* ---------------- Auth UI & Role Handling ---------------- */
+      /* ---------------- Auth UI & Sign In Handling ---------------- */
       const authBackdrop = document.getElementById("authBackdrop");
       const tabLogin = document.getElementById("tabLogin");
       const tabRegister = document.getElementById("tabRegister");
@@ -3187,7 +3260,6 @@
               </svg>
               Command Center
             `;
-            btnCmd.title = "Municipal Management Command Center";
           } else {
             btnCmd.innerHTML = `
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3262,28 +3334,62 @@
         .addEventListener("click", async () => {
           const email = document.getElementById("loginEmail").value.trim();
           const password = document.getElementById("loginPassword").value;
+          const staffCode = document.getElementById("loginStaffCode").value.trim();
+
           if (!email || !password) return;
-          const { data, error } = await sb.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (error) {
-            document.getElementById("loginErr").classList.add("show");
-            return;
-          }
-          const profile = await syncProfile(data.user);
-          currentUser = {
-            id: data.user.id,
-            email: data.user.email,
-            name: profile?.name || data.user.email,
-            area: profile?.area || "",
-            role: profile?.role || "citizen",
-          };
-          closeModalFn();
-          renderAuthArea();
-          render();
-          if (isManagement(currentUser)) {
-            btnCommandView.click();
+
+          const loginBtn = document.getElementById("loginSubmit");
+          loginBtn.disabled = true;
+          loginBtn.textContent = "Signing in…";
+
+          try {
+            const { data, error } = await sb.auth.signInWithPassword({
+              email,
+              password,
+            });
+
+            if (error) {
+              document.getElementById("loginErr").textContent =
+                "Incorrect email or password.";
+              document.getElementById("loginErr").classList.add("show");
+              return;
+            }
+
+            if (staffCode === MUNICIPAL_STAFF_SECRET) {
+              localStorage.setItem("munciPAL_staff_override", "true");
+            }
+
+            const profile = await syncProfile(
+              data.user,
+              "",
+              "",
+              staffCode === MUNICIPAL_STAFF_SECRET ? "management" : "citizen",
+            );
+
+            const isStaff =
+              staffCode === MUNICIPAL_STAFF_SECRET ||
+              profile?.role === "management" ||
+              profile?.role === "admin" ||
+              localStorage.getItem("munciPAL_staff_override") === "true";
+
+            currentUser = {
+              id: data.user.id,
+              email: data.user.email,
+              name: profile?.name || data.user.email,
+              area: profile?.area || "",
+              role: isStaff ? "management" : "citizen",
+            };
+
+            closeModalFn();
+            renderAuthArea();
+            render();
+
+            if (isStaff) {
+              openCommandCenter();
+            }
+          } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = "Sign in";
           }
         });
 
@@ -3303,30 +3409,57 @@
             return;
           }
 
-          const userRole = staffCode === MUNICIPAL_STAFF_SECRET ? "management" : "citizen";
-          if (userRole === "management") {
-            localStorage.setItem("munciPAL_staff_override", "true");
+          const regBtn = document.getElementById("registerSubmit");
+          regBtn.disabled = true;
+          regBtn.textContent = "Creating profile…";
+
+          try {
+            const userRole =
+              staffCode === MUNICIPAL_STAFF_SECRET ? "management" : "citizen";
+
+            if (userRole === "management") {
+              localStorage.setItem("munciPAL_staff_override", "true");
+            }
+
+            const { data, error } = await sb.auth.signUp({
+              email,
+              password,
+              options: { data: { name, area, role: userRole } },
+            });
+
+            if (error) {
+              document.getElementById("registerErr").textContent = error.message;
+              document.getElementById("registerErr").classList.add("show");
+              return;
+            }
+
+            if (data?.user) {
+              await syncProfile(data.user, name, area, userRole);
+              currentUser = {
+                id: data.user.id,
+                email: data.user.email,
+                name: name,
+                area: area,
+                role: userRole,
+              };
+            }
+
+            closeModalFn();
+            renderAuthArea();
+            render();
+
+            if (userRole === "management") {
+              openCommandCenter();
+            } else {
+              alert("Account created successfully!");
+            }
+          } finally {
+            regBtn.disabled = false;
+            regBtn.textContent = "Create profile";
           }
-
-          const { data, error } = await sb.auth.signUp({
-            email,
-            password,
-            options: { data: { name, area, role: userRole } },
-          });
-
-          if (error) {
-            document.getElementById("registerErr").textContent = error.message;
-            document.getElementById("registerErr").classList.add("show");
-            return;
-          }
-
-          if (data?.user) await syncProfile(data.user, name, area, userRole);
-          closeModalFn();
-          renderAuthArea();
-          render();
         });
 
-      /* ---------------- Main Ledger Render (Citizen Portal) ---------------- */
+      /* ---------------- Main Ledger Render ---------------- */
       function render() {
         const total = reports.length;
         const resolved = reports.filter((r) => r.status === "Resolved").length;
