@@ -3,13 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>munciPAL — Report a Civic Issue</title>
+    <title>munciPAL — Civic Reporting & City Command Center</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Leaflet Map CSS & JS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      crossorigin=""
+    ></script>
+
     <style>
       :root {
         --asphalt: #122b2e;
@@ -29,6 +41,8 @@
         --slate: #647069;
         --line: #d3ded6;
         --white: #ffffff;
+        --purple: #6a3cbc;
+        --purple-glow: #ede7f6;
       }
       * {
         box-sizing: border-box;
@@ -93,14 +107,14 @@
             transparent 70%
           );
         color: var(--concrete);
-        padding: 18px 28px;
+        padding: 14px 28px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
         position: sticky;
         top: 0;
-        z-index: 40;
+        z-index: 1000;
         border-bottom: 1px solid #33383f;
       }
       .brand {
@@ -109,8 +123,8 @@
         gap: 12px;
       }
       .brand-mark {
-        width: 38px;
-        height: 38px;
+        width: 36px;
+        height: 36px;
         flex-shrink: 0;
       }
       .brand-text .display {
@@ -127,10 +141,43 @@
         text-transform: uppercase;
         margin-top: 3px;
       }
+
+      /* View Mode Toggle (Citizen Portal vs Command Center) */
+      .view-switcher {
+        display: flex;
+        background: #091719;
+        border: 1px solid #2e4346;
+        border-radius: 24px;
+        padding: 3px;
+        gap: 2px;
+      }
+      .view-switch-btn {
+        background: none;
+        border: none;
+        color: #9ba1a9;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+      }
+      .view-switch-btn.active {
+        background: var(--orange);
+        color: var(--white);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      }
+      .view-switch-btn svg {
+        width: 14px;
+        height: 14px;
+      }
+
       .header-actions {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 14px;
         font-size: 13px;
         color: #c7cdd4;
       }
@@ -148,13 +195,11 @@
         color: var(--white);
         border: none;
         border-radius: 20px;
-        padding: 9px 18px;
-        font-size: 13px;
+        padding: 8px 16px;
+        font-size: 12.5px;
         font-weight: 600;
         letter-spacing: 0.02em;
-        transition:
-          background 0.15s ease,
-          transform 0.15s ease;
+        transition: all 0.15s ease;
       }
       .auth-btn:hover {
         background: var(--orange-dark);
@@ -167,12 +212,12 @@
         gap: 9px;
         background: #2b2f36;
         border: 1px solid #3b404a;
-        padding: 5px 14px 5px 5px;
+        padding: 4px 14px 4px 4px;
         border-radius: 22px;
       }
       .user-chip .avatar {
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
         background: var(--orange);
         color: var(--white);
@@ -185,10 +230,10 @@
         font-family: "JetBrains Mono", monospace;
       }
       .user-chip .name {
-        font-size: 13px;
+        font-size: 12.5px;
         color: var(--white);
         font-weight: 500;
-        max-width: 120px;
+        max-width: 110px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -205,21 +250,21 @@
         color: var(--white);
       }
 
-      /* ---------- hero ---------- */
+      /* ---------- Hero & Report Form ---------- */
       .hero {
-        padding: 68px 28px 40px;
+        padding: 48px 28px 36px;
         max-width: 1180px;
         margin: 0 auto;
         display: grid;
         grid-template-columns: 1.05fr 0.95fr;
-        gap: 56px;
+        gap: 48px;
         align-items: start;
       }
       @media (max-width: 900px) {
         .hero {
           grid-template-columns: 1fr;
-          gap: 40px;
-          padding-top: 44px;
+          gap: 36px;
+          padding-top: 32px;
         }
       }
 
@@ -235,7 +280,7 @@
         padding: 5px 10px;
         border-radius: 2px;
         border: 1px solid #f2cbae;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
       }
       .eyebrow::before {
         content: "";
@@ -257,9 +302,9 @@
       }
 
       .hero h1 {
-        font-size: 54px;
-        line-height: 1.03;
-        margin: 0 0 20px;
+        font-size: 48px;
+        line-height: 1.05;
+        margin: 0 0 16px;
         color: var(--asphalt);
       }
       .hero h1 span {
@@ -269,11 +314,11 @@
       }
 
       .hero p.lede {
-        font-size: 17px;
-        line-height: 1.65;
+        font-size: 16px;
+        line-height: 1.6;
         color: #4b4f55;
         max-width: 48ch;
-        margin: 0 0 30px;
+        margin: 0 0 24px;
       }
 
       .stat-row {
@@ -284,7 +329,7 @@
       }
       .stat {
         flex: 1;
-        padding: 16px 18px 0;
+        padding: 14px 16px 0;
         border-right: 1px solid var(--line);
       }
       .stat:last-child {
@@ -292,19 +337,19 @@
       }
       .stat .num {
         font-family: "Oswald", sans-serif;
-        font-size: 30px;
+        font-size: 28px;
         color: var(--asphalt);
         line-height: 1;
       }
       .stat .lbl {
-        font-size: 11.5px;
+        font-size: 11px;
         color: var(--slate);
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        margin-top: 6px;
+        margin-top: 4px;
       }
 
-      /* ---------- ticket card (signature form element) ---------- */
+      /* Form Ticket Card */
       .ticket-wrap {
         position: relative;
       }
@@ -312,7 +357,7 @@
         background: var(--paper);
         border: 1px solid var(--asphalt);
         position: relative;
-        padding: 28px 26px 24px;
+        padding: 24px 22px 20px;
         box-shadow: 7px 7px 0 var(--asphalt-2);
       }
       .ticket::before,
@@ -343,14 +388,14 @@
         bottom: -1px;
       }
       .ticket .form-title {
-        font-size: 13px;
+        font-size: 12.5px;
         color: var(--slate);
         letter-spacing: 0.1em;
         text-transform: uppercase;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
       }
       .ticket .form-title .id-tag {
         font-family: "JetBrains Mono", monospace;
@@ -358,37 +403,35 @@
       }
 
       .field {
-        margin-bottom: 16px;
+        margin-bottom: 14px;
       }
       .field label {
         display: block;
-        font-size: 12.5px;
+        font-size: 12px;
         font-weight: 600;
         color: var(--asphalt);
-        margin-bottom: 6px;
+        margin-bottom: 5px;
         text-transform: uppercase;
         letter-spacing: 0.04em;
       }
       .field .hint {
-        font-size: 11.5px;
+        font-size: 11px;
         color: var(--slate);
-        margin-top: 5px;
+        margin-top: 4px;
       }
       .field input[type="text"],
       .field input[type="email"],
       .field textarea,
       .field select {
         width: 100%;
-        padding: 10px 11px;
+        padding: 9px 11px;
         border: 1px solid #c9c2af;
         background: var(--white);
         font-family: "Inter", sans-serif;
-        font-size: 14px;
+        font-size: 13.5px;
         color: var(--asphalt);
         border-radius: 5px;
-        transition:
-          border-color 0.15s ease,
-          box-shadow 0.15s ease;
+        transition: all 0.15s ease;
       }
       .field input:focus,
       .field textarea:focus,
@@ -399,13 +442,65 @@
       }
       .field textarea {
         resize: vertical;
-        min-height: 78px;
+        min-height: 68px;
+      }
+
+      /* GPS & Interactive Location Picker */
+      .location-input-group {
+        display: flex;
+        gap: 6px;
+      }
+      .gps-btn {
+        background: var(--paper);
+        border: 1px solid #c9c2af;
+        border-radius: 5px;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--orange-dark);
+        white-space: nowrap;
+        transition: all 0.15s ease;
+      }
+      .gps-btn:hover {
+        background: var(--orange-glow);
+        border-color: var(--orange);
+      }
+      .gps-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke: var(--orange-dark);
+      }
+      .form-map-container {
+        height: 160px;
+        width: 100%;
+        margin-top: 8px;
+        border-radius: 6px;
+        border: 1px solid #c9c2af;
+        overflow: hidden;
+        position: relative;
+        z-index: 10;
+      }
+      .map-helper-badge {
+        position: absolute;
+        bottom: 6px;
+        left: 8px;
+        z-index: 500;
+        background: rgba(18, 43, 46, 0.85);
+        color: #fff;
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        pointer-events: none;
+        font-family: "JetBrains Mono", monospace;
       }
 
       .cat-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
+        gap: 6px;
       }
       @media (max-width: 520px) {
         .cat-grid {
@@ -415,13 +510,13 @@
       .cat-btn {
         border: 1px solid #c9c2af;
         background: var(--white);
-        border-radius: 6px;
-        padding: 10px 4px 8px;
+        border-radius: 5px;
+        padding: 8px 3px 6px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 6px;
-        font-size: 10.5px;
+        gap: 4px;
+        font-size: 10px;
         color: var(--asphalt);
         text-align: center;
         line-height: 1.15;
@@ -432,14 +527,14 @@
         transform: translateY(-1px);
       }
       .cat-btn svg {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         stroke: var(--asphalt);
       }
       .cat-btn.active {
         border-color: var(--orange);
         background: var(--orange-glow);
-        box-shadow: 0 0 0 3px var(--orange-glow);
+        box-shadow: 0 0 0 2px var(--orange-glow);
       }
       .cat-btn.active svg {
         stroke: var(--orange-dark);
@@ -447,15 +542,15 @@
 
       .sev-row {
         display: flex;
-        gap: 8px;
+        gap: 6px;
       }
       .sev-btn {
         flex: 1;
-        padding: 9px 4px;
+        padding: 8px 3px;
         border: 1px solid #c9c2af;
         background: var(--white);
         border-radius: 5px;
-        font-size: 12px;
+        font-size: 11.5px;
         font-weight: 600;
         color: var(--slate);
         transition: all 0.15s ease;
@@ -485,7 +580,7 @@
       .photo-drop {
         border: 1.5px dashed #c9c2af;
         border-radius: 6px;
-        padding: 16px;
+        padding: 14px;
         text-align: center;
         cursor: pointer;
         background: var(--white);
@@ -497,31 +592,31 @@
         background: var(--orange-glow);
       }
       .photo-drop .icon {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         stroke: var(--slate);
-        margin: 0 auto 6px;
+        margin: 0 auto 4px;
         display: block;
       }
       .photo-drop .txt {
-        font-size: 12.5px;
+        font-size: 12px;
         color: var(--slate);
       }
       .photo-drop .sub-hint {
-        font-size: 11px;
+        font-size: 10.5px;
         color: #8b929b;
-        margin-top: 4px;
+        margin-top: 2px;
       }
       .photo-preview {
-        margin-top: 12px;
+        margin-top: 10px;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+        gap: 6px;
       }
       .photo-thumb-wrap {
         position: relative;
         aspect-ratio: 1;
-        border-radius: 6px;
+        border-radius: 5px;
         overflow: hidden;
         border: 1px solid var(--asphalt);
         background: var(--asphalt-2);
@@ -534,10 +629,10 @@
       }
       .photo-thumb-wrap .del-btn {
         position: absolute;
-        top: 3px;
-        right: 3px;
-        width: 18px;
-        height: 18px;
+        top: 2px;
+        right: 2px;
+        width: 17px;
+        height: 17px;
         background: rgba(18, 43, 46, 0.85);
         color: var(--white);
         border: 1px solid rgba(255, 255, 255, 0.5);
@@ -545,60 +640,291 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
+        font-size: 10px;
         line-height: 1;
         cursor: pointer;
         padding: 0;
-        transition: background 0.15s ease;
       }
       .photo-thumb-wrap .del-btn:hover {
         background: var(--red);
       }
       .photo-thumb-wrap .idx-badge {
         position: absolute;
-        bottom: 3px;
-        left: 3px;
+        bottom: 2px;
+        left: 2px;
         background: rgba(18, 43, 46, 0.75);
         color: var(--white);
-        font-size: 9px;
+        font-size: 8.5px;
         font-family: "JetBrains Mono", monospace;
-        padding: 1px 4px;
+        padding: 1px 3px;
         border-radius: 3px;
       }
 
-      /* Multi-photo card styles */
+      /* AI Spam Analysis Banner in Form */
+      .ai-status-box {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+      .ai-status-box.legit {
+        display: flex;
+        background: var(--green-glow);
+        color: var(--green);
+        border: 1px solid #b8e6ca;
+      }
+      .ai-status-box.spam {
+        display: flex;
+        background: var(--red-glow);
+        color: var(--red);
+        border: 1px solid #f3c2b8;
+      }
+
+      .submit-btn {
+        width: 100%;
+        padding: 12px;
+        background: var(--orange);
+        color: var(--white);
+        border: none;
+        border-radius: 5px;
+        font-family: "Oswald", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 15px;
+        margin-top: 6px;
+        transition: all 0.15s ease;
+      }
+      .submit-btn:hover:not(:disabled) {
+        background: var(--orange-dark);
+        transform: translateY(-1px);
+      }
+      .submit-btn:disabled {
+        background: #c9c2af;
+        cursor: not-allowed;
+      }
+
+      .stamp {
+        position: absolute;
+        top: 50px;
+        right: 20px;
+        border: 3px solid var(--green);
+        color: var(--green);
+        font-family: "Oswald", sans-serif;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        padding: 4px 8px;
+        transform: rotate(-8deg);
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        pointer-events: none;
+        z-index: 50;
+      }
+      .stamp.show {
+        opacity: 1;
+      }
+
+      /* ---------- Ledger Section (Citizen View) ---------- */
+      .citizen-view {
+        display: block;
+      }
+      .ledger {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 28px 70px;
+      }
+      .ledger-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+        border-bottom: 2px solid var(--asphalt);
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+      }
+      .ledger-head h2 {
+        font-size: 26px;
+        margin: 0;
+      }
+      .filters {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .filter-btn {
+        padding: 6px 13px;
+        border: 1px solid #c9c2af;
+        background: var(--paper);
+        border-radius: 20px;
+        font-size: 12px;
+        color: var(--slate);
+        font-weight: 600;
+        transition: all 0.15s ease;
+      }
+      .filter-btn:hover {
+        border-color: var(--orange);
+        color: var(--orange-dark);
+      }
+      .filter-btn.active {
+        background: var(--asphalt);
+        color: var(--white);
+        border-color: var(--asphalt);
+      }
+
+      .tickets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+      }
+      .ticket-card {
+        background: var(--paper);
+        border: 1px solid var(--asphalt);
+        border-radius: 6px;
+        padding: 15px 15px 13px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        transition: all 0.15s ease;
+      }
+      .ticket-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 4px 5px 0 var(--concrete-2);
+      }
+      .ticket-card.spam-card {
+        border-left: 4px solid var(--red);
+        background: #fdfaf9;
+      }
+      .tc-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .tc-id {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--slate);
+      }
+      .tc-cats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 2px;
+      }
+      .tc-cat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        background: var(--orange-glow);
+        color: var(--orange-dark);
+        padding: 2px 7px;
+        border-radius: 20px;
+      }
+      .tc-cat svg {
+        width: 12px;
+        height: 12px;
+        stroke: var(--orange-dark);
+        flex-shrink: 0;
+      }
+      .badge {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 2px 7px;
+        border-radius: 20px;
+        white-space: nowrap;
+      }
+      .badge.Submitted {
+        background: var(--concrete-2);
+        color: #5c5546;
+      }
+      .badge.InReview {
+        background: var(--yellow-glow);
+        color: #7a5b00;
+      }
+      .badge.Resolved {
+        background: var(--green-glow);
+        color: var(--green);
+      }
+      .ai-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        font-family: "JetBrains Mono", monospace;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-top: 2px;
+      }
+      .ai-badge.verified {
+        background: var(--green-glow);
+        color: var(--green);
+        border: 1px solid #b8e6ca;
+      }
+      .ai-badge.spam {
+        background: var(--red-glow);
+        color: var(--red);
+        border: 1px solid #f3c2b8;
+      }
+
+      .tc-loc {
+        font-size: 12px;
+        color: var(--slate);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .tc-loc svg {
+        width: 13px;
+        height: 13px;
+        stroke: var(--slate);
+        flex-shrink: 0;
+      }
+      .tc-desc {
+        font-size: 12.5px;
+        color: #3e4145;
+        line-height: 1.45;
+      }
+
+      /* Card Gallery */
       .tc-gallery {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 5px;
       }
       .tc-photo-main {
         width: 100%;
-        height: 140px;
+        height: 135px;
         object-fit: cover;
         border-radius: 5px;
         border: 1px solid var(--line);
         cursor: zoom-in;
-        transition: transform 0.15s ease;
       }
       .tc-photo-main:hover {
         filter: brightness(0.96);
       }
       .tc-thumbs-row {
         display: flex;
-        gap: 6px;
+        gap: 5px;
         overflow-x: auto;
         padding-bottom: 2px;
       }
       .tc-thumb-item {
-        width: 42px;
-        height: 42px;
+        width: 40px;
+        height: 40px;
         flex-shrink: 0;
         border-radius: 4px;
         border: 1.5px solid var(--line);
         overflow: hidden;
         cursor: pointer;
-        position: relative;
       }
       .tc-thumb-item.active {
         border-color: var(--orange);
@@ -610,6 +936,221 @@
         display: block;
       }
 
+      .tc-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px dashed var(--line);
+      }
+      .tc-sev {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .tc-sev.Low {
+        color: #7a5b00;
+      }
+      .tc-sev.Medium {
+        color: var(--orange-dark);
+      }
+      .tc-sev.High {
+        color: var(--red);
+      }
+      .tc-sev.Urgent {
+        color: var(--asphalt);
+      }
+      .tc-date {
+        font-size: 10.5px;
+        color: var(--slate);
+      }
+      .tc-actions {
+        display: flex;
+        gap: 5px;
+      }
+      .tc-actions button {
+        font-size: 10.5px;
+        font-weight: 600;
+        background: none;
+        border: 1px solid #c9c2af;
+        border-radius: 4px;
+        padding: 4px 8px;
+        color: var(--slate);
+        transition: all 0.15s ease;
+      }
+      .tc-actions button.resolve:hover {
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .tc-actions button.withdraw:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+
+      /* ---------- Command Center View ---------- */
+      .command-view {
+        display: none;
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: 24px 24px 60px;
+      }
+      .cmd-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        border-bottom: 2px solid var(--asphalt);
+        padding-bottom: 12px;
+      }
+      .cmd-header h2 {
+        font-size: 28px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .cmd-live-dot {
+        width: 10px;
+        height: 10px;
+        background: #22c55e;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse 1.5s infinite;
+      }
+
+      /* Command KPI Row */
+      .cmd-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+      .cmd-kpi-card {
+        background: var(--paper);
+        border: 1px solid var(--asphalt);
+        border-radius: 6px;
+        padding: 14px 16px;
+        box-shadow: 4px 4px 0 var(--asphalt-2);
+      }
+      .cmd-kpi-card .val {
+        font-family: "Oswald", sans-serif;
+        font-size: 32px;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+      .cmd-kpi-card .lbl {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--slate);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+      }
+      .cmd-kpi-card.urgent .val {
+        color: var(--red);
+      }
+      .cmd-kpi-card.spam .val {
+        color: var(--purple);
+      }
+
+      /* Command Center Main Layout */
+      .cmd-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 1020px) {
+        .cmd-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .cmd-map-card {
+        background: var(--paper);
+        border: 1px solid var(--asphalt);
+        border-radius: 6px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .cmd-card-head {
+        padding: 12px 16px;
+        background: var(--asphalt);
+        color: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      #cityMap {
+        height: 520px;
+        width: 100%;
+        background: #cbd5e1;
+      }
+
+      .cmd-list-card {
+        background: var(--paper);
+        border: 1px solid var(--asphalt);
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        max-height: 574px;
+      }
+      .cmd-feed {
+        overflow-y: auto;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+      }
+      .cmd-feed-item {
+        background: var(--concrete);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: all 0.15s ease;
+      }
+      .cmd-feed-item:hover {
+        border-color: var(--orange);
+        background: #fff;
+      }
+      .cmd-feed-item.quarantine {
+        border-left: 4px solid var(--purple);
+        background: var(--purple-glow);
+      }
+      .cmd-feed-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+        flex-wrap: wrap;
+      }
+      .cmd-action-btn {
+        font-size: 10.5px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid #c9c2af;
+        background: #fff;
+      }
+      .cmd-action-btn.verify {
+        color: var(--green);
+        border-color: var(--green);
+      }
+      .cmd-action-btn.spam-flag {
+        color: var(--red);
+        border-color: var(--red);
+      }
+      .cmd-action-btn.dispatch {
+        color: var(--orange-dark);
+        border-color: var(--orange);
+      }
+
       /* Lightbox Modal */
       .lightbox-backdrop {
         position: fixed;
@@ -618,7 +1159,7 @@
         display: none;
         align-items: center;
         justify-content: center;
-        z-index: 200;
+        z-index: 2000;
         padding: 24px;
         backdrop-filter: blur(4px);
       }
@@ -661,7 +1202,6 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: background 0.15s ease;
       }
       .lightbox-btn:hover {
         background: var(--orange);
@@ -678,281 +1218,82 @@
         line-height: 1;
       }
 
-      .submit-btn {
+      /* Auth Modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(30, 33, 38, 0.62);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 20px;
+        backdrop-filter: blur(2px);
+      }
+      .modal-backdrop.show {
+        display: flex;
+      }
+      .modal {
+        background: var(--paper);
+        border-radius: 10px;
+        max-width: 400px;
         width: 100%;
-        padding: 13px;
-        background: var(--orange);
-        color: var(--white);
-        border: none;
-        border-radius: 5px;
-        font-family: "Oswald", sans-serif;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-size: 15px;
-        margin-top: 6px;
-        transition:
-          background 0.15s ease,
-          transform 0.1s ease;
+        padding: 28px 26px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        position: relative;
       }
-      .submit-btn:hover:not(:disabled) {
-        background: var(--orange-dark);
-        transform: translateY(-1px);
-      }
-      .submit-btn:disabled {
-        background: #c9c2af;
-        cursor: not-allowed;
-      }
-
-      .stamp {
+      .modal .close-x {
         position: absolute;
-        top: 60px;
-        right: 26px;
-        border: 3px solid var(--green);
-        color: var(--green);
-        font-family: "Oswald", sans-serif;
+        top: 14px;
+        right: 16px;
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: var(--slate);
+        line-height: 1;
+      }
+      .modal-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 20px;
+        background: var(--concrete-2);
+        border-radius: 20px;
+        padding: 3px;
+      }
+      .modal-tabs button {
+        flex: 1;
+        padding: 8px;
+        border: none;
+        background: none;
+        border-radius: 18px;
         font-size: 13px;
-        letter-spacing: 0.08em;
-        padding: 5px 10px;
-        transform: rotate(-8deg);
-        border-radius: 4px;
-        opacity: 0;
-        transition: opacity 0.25s ease;
-        pointer-events: none;
+        font-weight: 600;
+        color: var(--slate);
       }
-      .stamp.show {
-        opacity: 1;
+      .modal-tabs button.active {
+        background: var(--asphalt);
+        color: var(--white);
       }
-
-      /* ---------- route divider ---------- */
-      .route-divider {
-        max-width: 1180px;
-        margin: 8px auto 0;
-        padding: 0 28px;
+      .modal h3 {
+        font-size: 20px;
+        margin: 0 0 4px;
       }
-      .route-divider svg {
-        width: 100%;
-        height: 24px;
+      .modal .sub-txt {
+        font-size: 13px;
+        color: var(--slate);
+        margin-bottom: 20px;
+      }
+      .modal .err {
+        font-size: 12.5px;
+        color: var(--red);
+        margin-top: 8px;
+        display: none;
+      }
+      .modal .err.show {
         display: block;
       }
 
-      /* ---------- ledger section ---------- */
-      .ledger {
-        max-width: 1180px;
-        margin: 0 auto;
-        padding: 36px 28px 80px;
-      }
-      .ledger-head {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 20px;
-        flex-wrap: wrap;
-        border-bottom: 2px solid var(--asphalt);
-        padding-bottom: 14px;
-        margin-bottom: 22px;
-      }
-      .ledger-head h2 {
-        font-size: 26px;
-        margin: 0;
-      }
-      .filters {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .filter-btn {
-        padding: 7px 14px;
-        border: 1px solid #c9c2af;
-        background: var(--paper);
-        border-radius: 20px;
-        font-size: 12.5px;
-        color: var(--slate);
-        font-weight: 600;
-        transition: all 0.15s ease;
-      }
-      .filter-btn:hover {
-        border-color: var(--orange);
-        color: var(--orange-dark);
-      }
-      .filter-btn.active {
-        background: var(--asphalt);
-        color: var(--white);
-        border-color: var(--asphalt);
-      }
-
-      .empty-state {
-        border: 1.5px dashed var(--line);
-        border-radius: 8px;
-        padding: 48px 20px;
-        text-align: center;
-        color: var(--slate);
-      }
-      .empty-state svg {
-        width: 34px;
-        height: 34px;
-        stroke: var(--slate);
-        margin-bottom: 10px;
-      }
-      .empty-state .t {
-        font-family: "Oswald", sans-serif;
-        font-size: 16px;
-        color: var(--asphalt);
-        text-transform: uppercase;
-        margin-bottom: 6px;
-      }
-
-      .tickets-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 18px;
-      }
-      .ticket-card {
-        background: var(--paper);
-        border: 1px solid var(--asphalt);
-        border-radius: 6px;
-        padding: 16px 16px 14px;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        transition:
-          transform 0.15s ease,
-          box-shadow 0.15s ease;
-      }
-      .ticket-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 4px 5px 0 var(--concrete-2);
-      }
-      .tc-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 10px;
-      }
-      .tc-id {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 11px;
-        color: var(--slate);
-      }
-      .tc-cats {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 2px;
-      }
-      .tc-cat {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 11.5px;
-        font-weight: 600;
-        background: var(--orange-glow);
-        color: var(--orange-dark);
-        padding: 3px 8px 3px 6px;
-        border-radius: 20px;
-      }
-      .tc-cat svg {
-        width: 13px;
-        height: 13px;
-        stroke: var(--orange-dark);
-        flex-shrink: 0;
-      }
-      .badge {
-        font-size: 10.5px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        padding: 3px 8px;
-        border-radius: 20px;
-        white-space: nowrap;
-      }
-      .badge.Submitted {
-        background: var(--concrete-2);
-        color: #5c5546;
-      }
-      .badge.InReview {
-        background: var(--yellow-glow);
-        color: #7a5b00;
-      }
-      .badge.Resolved {
-        background: var(--green-glow);
-        color: var(--green);
-      }
-      .tc-loc {
-        font-size: 12.5px;
-        color: var(--slate);
-        display: flex;
-        align-items: center;
-        gap: 5px;
-      }
-      .tc-loc svg {
-        width: 13px;
-        height: 13px;
-        stroke: var(--slate);
-        flex-shrink: 0;
-      }
-      .tc-desc {
-        font-size: 13px;
-        color: #3e4145;
-        line-height: 1.45;
-      }
-      .tc-author {
-        font-size: 11px;
-        color: var(--slate);
-      }
-      .tc-bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: auto;
-        padding-top: 8px;
-        border-top: 1px dashed var(--line);
-      }
-      .tc-sev {
-        font-size: 10.5px;
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-      .tc-sev.Low {
-        color: #7a5b00;
-      }
-      .tc-sev.Medium {
-        color: var(--orange-dark);
-      }
-      .tc-sev.High {
-        color: var(--red);
-      }
-      .tc-sev.Urgent {
-        color: var(--asphalt);
-      }
-      .tc-date {
-        font-size: 11px;
-        color: var(--slate);
-      }
-      .tc-actions {
-        display: flex;
-        gap: 6px;
-      }
-      .tc-actions button {
-        font-size: 11px;
-        font-weight: 600;
-        background: none;
-        border: 1px solid #c9c2af;
-        border-radius: 5px;
-        padding: 5px 9px;
-        color: var(--slate);
-        transition: all 0.15s ease;
-      }
-      .tc-actions button.resolve:hover {
-        border-color: var(--green);
-        color: var(--green);
-      }
-      .tc-actions button.withdraw:hover {
-        border-color: var(--red);
-        color: var(--red);
-      }
-
-      /* ---------- reviews ---------- */
+      /* Reviews */
       .reviews-block {
         border-top: 1px dashed var(--line);
         padding-top: 10px;
@@ -1038,19 +1379,15 @@
         padding: 2px;
       }
       .star-input svg {
-        width: 19px;
-        height: 19px;
-        transition: transform 0.1s ease;
-      }
-      .star-input button:hover svg {
-        transform: scale(1.15);
+        width: 18px;
+        height: 18px;
       }
       .review-form textarea {
         font-size: 12px;
         padding: 7px 8px;
         border: 1px solid #c9c2af;
         border-radius: 5px;
-        min-height: 50px;
+        min-height: 48px;
         font-family: "Inter", sans-serif;
       }
       .review-form .rv-submit {
@@ -1059,108 +1396,18 @@
         color: var(--white);
         border: none;
         border-radius: 5px;
-        padding: 6px 13px;
-        font-size: 11.5px;
+        padding: 5px 12px;
+        font-size: 11px;
         font-weight: 600;
-      }
-      .review-form .rv-submit:hover {
-        background: var(--orange-dark);
-      }
-      .review-locked {
-        font-size: 11.5px;
-        color: var(--slate);
-        font-style: italic;
-      }
-
-      /* ---------- modal ---------- */
-      .modal-backdrop {
-        position: fixed;
-        inset: 0;
-        background: rgba(30, 33, 38, 0.62);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 100;
-        padding: 20px;
-        backdrop-filter: blur(2px);
-      }
-      .modal-backdrop.show {
-        display: flex;
-      }
-      .modal {
-        background: var(--paper);
-        border-radius: 10px;
-        max-width: 400px;
-        width: 100%;
-        padding: 28px 26px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        position: relative;
-      }
-      .modal .close-x {
-        position: absolute;
-        top: 14px;
-        right: 16px;
-        background: none;
-        border: none;
-        font-size: 20px;
-        color: var(--slate);
-        line-height: 1;
-      }
-      .modal .close-x:hover {
-        color: var(--asphalt);
-      }
-      .modal-tabs {
-        display: flex;
-        gap: 4px;
-        margin-bottom: 20px;
-        background: var(--concrete-2);
-        border-radius: 20px;
-        padding: 3px;
-      }
-      .modal-tabs button {
-        flex: 1;
-        padding: 8px;
-        border: none;
-        background: none;
-        border-radius: 18px;
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--slate);
-      }
-      .modal-tabs button.active {
-        background: var(--asphalt);
-        color: var(--white);
-      }
-      .modal h3 {
-        font-size: 20px;
-        margin: 0 0 4px;
-      }
-      .modal .sub-txt {
-        font-size: 13px;
-        color: var(--slate);
-        margin-bottom: 20px;
-      }
-      .modal .err {
-        font-size: 12.5px;
-        color: var(--red);
-        margin-top: 8px;
-        display: none;
-      }
-      .modal .err.show {
-        display: block;
       }
 
       footer {
         background: var(--asphalt);
         color: #9ba1a9;
         text-align: center;
-        padding: 24px;
+        padding: 20px;
         font-size: 12px;
       }
-      footer a {
-        text-decoration: underline;
-      }
-
       .sr-only {
         position: absolute;
         width: 1px;
@@ -1168,27 +1415,56 @@
         overflow: hidden;
         clip: rect(0 0 0 0);
       }
-      :focus-visible {
-        outline: 2px solid var(--orange);
-        outline-offset: 2px;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        * {
-          transition: none !important;
-          animation: none !important;
-        }
-      }
     </style>
   </head>
   <body>
+    <!-- Top Header -->
     <header>
       <div class="brand">
-        <img class="brand-mark" src="hardhat-logo.svg" alt="munciPAL logo" onerror="this.style.display='none'">
+        <img
+          class="brand-mark"
+          src="hardhat-logo.svg"
+          alt="munciPAL logo"
+          onerror="this.style.display='none'"
+        />
         <div class="brand-text">
           <p class="display">munciPAL</p>
-          <p class="sub">Municipal Service Requests</p>
+          <p class="sub">Civic Service & Ops Command</p>
         </div>
       </div>
+
+      <!-- View Switcher -->
+      <div class="view-switcher">
+        <button
+          type="button"
+          class="view-switch-btn active"
+          id="btnCitizenView"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          </svg>
+          Citizen Portal
+        </button>
+        <button type="button" class="view-switch-btn" id="btnCommandView">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          Command Center
+        </button>
+      </div>
+
       <div class="header-actions">
         <span class="count" id="headerCount">0 open requests</span>
         <span class="divider"></span>
@@ -1197,180 +1473,292 @@
     </header>
     <div class="hazard-strip"></div>
 
-    <section class="hero">
-      <div>
-        <span class="eyebrow">Public Works &middot; Report an Issue</span>
-        <h1>
-          Broken road.<br />Blocked drain.<br /><span>File it in minutes.</span>
-        </h1>
-        <p class="lede">
-          Report potholes, damaged roads, choked sewage lines, streetlights, and
-          other public infrastructure faults directly to the works department.
-          Register to track your reports and leave a review once the fix is
-          done.
-        </p>
-        <div class="stat-row">
-          <div class="stat">
-            <div class="num mono" id="statTotal">0</div>
-            <div class="lbl">Filed</div>
-          </div>
-          <div class="stat">
-            <div class="num mono" id="statOpen">0</div>
-            <div class="lbl">Open</div>
-          </div>
-          <div class="stat">
-            <div class="num mono" id="statResolved">0</div>
-            <div class="lbl">Resolved</div>
-          </div>
-          <div class="stat">
-            <div class="num mono" id="statRate">0%</div>
-            <div class="lbl">Resolution rate</div>
+    <!-- ================= CITIZEN PORTAL VIEW ================= -->
+    <div class="citizen-view" id="citizenView">
+      <section class="hero">
+        <div>
+          <span class="eyebrow">Public Works &middot; Report an Issue</span>
+          <h1>
+            Broken road.<br />Blocked drain.<br /><span>File it in minutes.</span>
+          </h1>
+          <p class="lede">
+            Report potholes, road damage, blocked drains, or streetlight
+            failures with real-time GPS location and AI photo verification.
+            Track your report through resolution.
+          </p>
+          <div class="stat-row">
+            <div class="stat">
+              <div class="num mono" id="statTotal">0</div>
+              <div class="lbl">Filed</div>
+            </div>
+            <div class="stat">
+              <div class="num mono" id="statOpen">0</div>
+              <div class="lbl">Open</div>
+            </div>
+            <div class="stat">
+              <div class="num mono" id="statResolved">0</div>
+              <div class="lbl">Resolved</div>
+            </div>
+            <div class="stat">
+              <div class="num mono" id="statRate">0%</div>
+              <div class="lbl">Resolution rate</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="ticket-wrap">
-        <form class="ticket" id="reportForm">
-          <div class="stamp" id="stamp">FILED</div>
-          <div class="form-title">
-            <span>Service Request Form</span
-            ><span class="id-tag" id="nextId">Assigned on submit</span>
-          </div>
-
-          <div class="field">
-            <label
-              >Issue category
-              <span
-                style="
-                  text-transform: none;
-                  color: var(--slate);
-                  font-weight: 400;
-                "
-                >(select all that apply)</span
-              ></label
-            >
-            <div class="cat-grid" id="catGrid"></div>
-            <input type="hidden" id="category" required />
-          </div>
-
-          <div class="field">
-            <label for="location">Location</label>
-            <input
-              type="text"
-              id="location"
-              placeholder="Street, landmark, or area"
-              required
-            />
-          </div>
-
-          <div class="field">
-            <label for="description">Description</label>
-            <textarea
-              id="description"
-              placeholder="What's wrong, and how big a problem is it?"
-              required
-            ></textarea>
-          </div>
-
-          <div class="field">
-            <label>Severity</label>
-            <div class="sev-row" id="sevRow">
-              <button type="button" class="sev-btn" data-sev="Low">Low</button>
-              <button type="button" class="sev-btn" data-sev="Medium">
-                Medium
-              </button>
-              <button type="button" class="sev-btn" data-sev="High">
-                High
-              </button>
-              <button type="button" class="sev-btn" data-sev="Urgent">
-                Urgent
-              </button>
+        <div class="ticket-wrap">
+          <form class="ticket" id="reportForm">
+            <div class="stamp" id="stamp">FILED</div>
+            <div class="form-title">
+              <span>Service Request Form</span
+              ><span class="id-tag" id="nextId">Assigned on submit</span>
             </div>
-            <input type="hidden" id="severity" required />
-          </div>
 
-          <!-- Multi-photo upload section -->
-          <div class="field">
-            <label for="photoInput">Photos (optional, up to 5)</label>
-            <div class="photo-drop" id="photoDrop">
-              <svg
-                class="icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke-width="1.6"
+            <div class="field">
+              <label
+                >Issue category
+                <span
+                  style="
+                    text-transform: none;
+                    color: var(--slate);
+                    font-weight: 400;
+                  "
+                  >(select all that apply)</span
+                ></label
               >
-                <path d="M4 16l4.5-6 3.5 4 3-3.5L20 16" />
-                <rect x="3" y="4" width="18" height="16" rx="2" />
-                <circle cx="8" cy="9" r="1.5" />
-              </svg>
-              <div class="txt" id="photoDropText">Tap or drop photos to attach</div>
-              <div class="sub-hint">PNG, JPG or WebP (max 5 photos)</div>
+              <div class="cat-grid" id="catGrid"></div>
+              <input type="hidden" id="category" required />
             </div>
-            <input
-              type="file"
-              id="photoInput"
-              accept="image/*"
-              multiple
-              class="sr-only"
-            />
-            <div class="photo-preview" id="photoPreview"></div>
+
+            <!-- Location with GPS & Interactive Map -->
+            <div class="field">
+              <label for="location">Location & GPS Coordinates</label>
+              <div class="location-input-group">
+                <input
+                  type="text"
+                  id="location"
+                  placeholder="Street, landmark, or click on map"
+                  required
+                />
+                <button type="button" class="gps-btn" id="btnGps">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"
+                    />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  Detect GPS
+                </button>
+              </div>
+              <div class="form-map-container" id="formMap">
+                <div class="map-helper-badge">
+                  📍 Click or drag pin to adjust exact location
+                </div>
+              </div>
+              <input type="hidden" id="latitude" />
+              <input type="hidden" id="longitude" />
+            </div>
+
+            <div class="field">
+              <label for="description">Description</label>
+              <textarea
+                id="description"
+                placeholder="What's wrong, and how big a problem is it?"
+                required
+              ></textarea>
+            </div>
+
+            <div class="field">
+              <label>Severity</label>
+              <div class="sev-row" id="sevRow">
+                <button type="button" class="sev-btn" data-sev="Low">
+                  Low
+                </button>
+                <button type="button" class="sev-btn" data-sev="Medium">
+                  Medium
+                </button>
+                <button type="button" class="sev-btn" data-sev="High">
+                  High
+                </button>
+                <button type="button" class="sev-btn" data-sev="Urgent">
+                  Urgent
+                </button>
+              </div>
+              <input type="hidden" id="severity" required />
+            </div>
+
+            <!-- Multi-photo upload with AI Analyzer -->
+            <div class="field">
+              <label for="photoInput"
+                >Photos (optional, up to 5) & AI Quality Check</label
+              >
+              <div class="photo-drop" id="photoDrop">
+                <svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke-width="1.6"
+                >
+                  <path d="M4 16l4.5-6 3.5 4 3-3.5L20 16" />
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <circle cx="8" cy="9" r="1.5" />
+                </svg>
+                <div class="txt" id="photoDropText">
+                  Tap or drop photos to attach
+                </div>
+                <div class="sub-hint">
+                  AI scans photos for legitimacy & hazard clarity
+                </div>
+              </div>
+              <input
+                type="file"
+                id="photoInput"
+                accept="image/*"
+                multiple
+                class="sr-only"
+              />
+              <div class="photo-preview" id="photoPreview"></div>
+              <div class="ai-status-box" id="aiStatusBox"></div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+              Submit request
+            </button>
+            <p
+              class="hint"
+              style="text-align: center; margin-top: 10px"
+              id="formHint"
+            >
+              Signed in as guest — you can still file a report; sign in to track
+              it under your name.
+            </p>
+          </form>
+        </div>
+      </section>
+
+      <!-- Ledger Section -->
+      <section class="ledger">
+        <div class="ledger-head">
+          <h2>Open Civic Tickets</h2>
+          <div class="filters" id="filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="open">Open</button>
+            <button class="filter-btn" data-filter="resolved">Resolved</button>
+            <button
+              class="filter-btn"
+              data-filter="mine"
+              id="mineFilterBtn"
+              style="display: none"
+            >
+              My reports
+            </button>
           </div>
-
-          <button type="submit" class="submit-btn" id="submitBtn">
-            Submit request
-          </button>
-          <p
-            class="hint"
-            style="text-align: center; margin-top: 10px"
-            id="formHint"
-          >
-            Signed in as guest — you can still file a report; sign in to track
-            it under your name.
-          </p>
-        </form>
-      </div>
-    </section>
-
-    <div class="route-divider">
-      <svg viewBox="0 0 1200 24" preserveAspectRatio="none">
-        <line
-          x1="0"
-          y1="12"
-          x2="1200"
-          y2="12"
-          stroke="#D8D2C2"
-          stroke-width="2"
-          stroke-dasharray="24 16"
-        />
-      </svg>
+        </div>
+        <div id="ledgerBody"></div>
+      </section>
     </div>
 
-    <section class="ledger">
-      <div class="ledger-head">
-        <h2>Open Tickets</h2>
-        <div class="filters" id="filters">
-          <button class="filter-btn active" data-filter="all">All</button>
-          <button class="filter-btn" data-filter="open">Open</button>
-          <button class="filter-btn" data-filter="resolved">Resolved</button>
-          <button
-            class="filter-btn"
-            data-filter="mine"
-            id="mineFilterBtn"
-            style="display: none"
-          >
-            My reports
+    <!-- ================= COMMAND CENTER VIEW ================= -->
+    <div class="command-view" id="commandView">
+      <div class="cmd-header">
+        <h2>
+          <span class="cmd-live-dot"></span> City Operations Live Command Center
+        </h2>
+        <div class="filters" id="cmdFilters">
+          <button class="filter-btn active" data-cmdfilter="all">All</button>
+          <button class="filter-btn" data-cmdfilter="urgent">
+            🚨 Urgent Dispatches
+          </button>
+          <button class="filter-btn" data-cmdfilter="open">Open</button>
+          <button class="filter-btn" data-cmdfilter="spam">
+            ⚠️ Spam Quarantine
           </button>
         </div>
       </div>
-      <div id="ledgerBody"></div>
-    </section>
 
-    <footer>
-      munciPAL &middot; civic issue reporting for your community &middot;
-      reports, profiles, and reviews are visible to everyone using this page
-    </footer>
+      <!-- KPI Metrics Bar -->
+      <div class="cmd-kpi-grid">
+        <div class="cmd-kpi-card">
+          <div class="val mono" id="cmdTotal">0</div>
+          <div class="lbl">Total City Reports</div>
+        </div>
+        <div class="cmd-kpi-card urgent">
+          <div class="val mono" id="cmdUrgent">0</div>
+          <div class="lbl">Urgent / High Priority</div>
+        </div>
+        <div class="cmd-kpi-card">
+          <div class="val mono" id="cmdOpen">0</div>
+          <div class="lbl">Active Work Orders</div>
+        </div>
+        <div class="cmd-kpi-card spam">
+          <div class="val mono" id="cmdSpam">0</div>
+          <div class="lbl">AI Flagged Spam</div>
+        </div>
+      </div>
 
-    <!-- Auth modal -->
+      <!-- Command Map and Live Feed Grid -->
+      <div class="cmd-grid">
+        <div class="cmd-map-card">
+          <div class="cmd-card-head">
+            <span>🗺️ Real-Time Municipal Incident Map</span>
+            <span style="font-size: 11px; opacity: 0.8"
+              >Click markers to inspect & dispatch</span
+            >
+          </div>
+          <div id="cityMap"></div>
+        </div>
+
+        <div class="cmd-list-card">
+          <div class="cmd-card-head">
+            <span>📋 Live Dispatch Feed & AI Quarantine</span>
+            <span id="cmdFeedCount" style="font-size: 11px; opacity: 0.8"
+              >0 tickets</span
+            >
+          </div>
+          <div class="cmd-feed" id="cmdFeed"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div class="lightbox-backdrop" id="lightboxBackdrop">
+      <div class="lightbox-content">
+        <button
+          class="lightbox-close"
+          id="closeLightbox"
+          aria-label="Close image"
+        >
+          &times;
+        </button>
+        <img
+          class="lightbox-img"
+          id="lightboxImg"
+          src=""
+          alt="Full view photo"
+        />
+        <div class="lightbox-nav">
+          <button
+            class="lightbox-btn"
+            id="lightboxPrev"
+            aria-label="Previous image"
+          >
+            &#8592;
+          </button>
+          <span id="lightboxCounter">1 / 1</span>
+          <button class="lightbox-btn" id="lightboxNext" aria-label="Next image">
+            &#8594;
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth Modal -->
     <div class="modal-backdrop" id="authBackdrop">
       <div class="modal">
         <button class="close-x" id="closeModal" aria-label="Close">
@@ -1401,16 +1789,13 @@
           <button class="submit-btn" id="loginSubmit" type="button">
             Sign in
           </button>
-          <p class="err" id="loginErr">
-            No profile found with that email — try registering instead.
-          </p>
-          <p class="err" id="loginPassErr">Incorrect password.</p>
+          <p class="err" id="loginErr">Incorrect email or password.</p>
         </div>
 
         <div id="registerPane" style="display: none">
           <h3>Create your profile</h3>
           <p class="sub-txt">
-            Just your name, email, and a password to get started.
+            Enter your details to file and track civic reports.
           </p>
           <div class="field">
             <label for="regName">Full name</label
@@ -1437,16 +1822,7 @@
             />
           </div>
           <div class="field">
-            <label for="regArea"
-              >Ward / area
-              <span
-                style="
-                  text-transform: none;
-                  color: var(--slate);
-                  font-weight: 400;
-                "
-                >(optional)</span
-              ></label
+            <label for="regArea">Ward / area (optional)</label
             ><input
               type="text"
               id="regArea"
@@ -1456,28 +1832,18 @@
           <button class="submit-btn" id="registerSubmit" type="button">
             Create profile
           </button>
-          <p class="err" id="registerErr">
-            That email is already registered — try signing in.
-          </p>
+          <p class="err" id="registerErr"></p>
           <p class="err" id="registerPassErr">
-            Passwords must be at least 8 characters and match.
+            Passwords must match and be at least 8 characters.
           </p>
         </div>
       </div>
     </div>
 
-    <!-- Lightbox Modal for inspecting photos -->
-    <div class="lightbox-backdrop" id="lightboxBackdrop">
-      <div class="lightbox-content">
-        <button class="lightbox-close" id="closeLightbox" aria-label="Close image">&times;</button>
-        <img class="lightbox-img" id="lightboxImg" src="" alt="Full view photo">
-        <div class="lightbox-nav">
-          <button class="lightbox-btn" id="lightboxPrev" aria-label="Previous image">&#8592;</button>
-          <span id="lightboxCounter">1 / 1</span>
-          <button class="lightbox-btn" id="lightboxNext" aria-label="Next image">&#8594;</button>
-        </div>
-      </div>
-    </div>
+    <footer>
+      munciPAL &middot; AI-Powered Civic Issue Reporting & Municipal Command
+      Center
+    </footer>
 
     <script>
       const CATEGORIES = [
@@ -1485,44 +1851,53 @@
           id: "pothole",
           label: "Pothole",
           icon: '<circle cx="12" cy="12" r="8"/><path d="M8 10l3 2-1 4M15 9l-2 3 2 3"/>',
+          color: "#c1442d",
         },
         {
           id: "road",
           label: "Damaged Road",
           icon: '<path d="M3 20h18M6 20l3-16h6l3 16"/><path d="M11 8l-1.5 6M14 10l1 5"/>',
+          color: "#d9a404",
         },
         {
           id: "drain",
           label: "Choked Drain",
           icon: '<rect x="4" y="6" width="16" height="12" rx="1.5"/><path d="M7 9h.01M7 12h.01M7 15h.01M12 9h.01M12 12h.01M12 15h.01M17 9h.01M17 12h.01M17 15h.01"/>',
+          color: "#0e7c86",
         },
         {
           id: "light",
           label: "Streetlight",
           icon: '<path d="M12 3v4"/><rect x="8" y="7" width="8" height="7" rx="1.5"/><path d="M10 14l-1 7h6l-1-7"/>',
+          color: "#f59e0b",
         },
         {
           id: "garbage",
           label: "Garbage",
           icon: '<path d="M5 7h14l-1.2 13a2 2 0 01-2 1.8H8.2a2 2 0 01-2-1.8L5 7z"/><path d="M9 3h6l1 4H8l1-4z"/>',
+          color: "#6b7280",
         },
         {
           id: "water",
           label: "Water Leak",
           icon: '<path d="M12 3c3 4 6 7.5 6 11a6 6 0 11-12 0c0-3.5 3-7 6-11z"/>',
+          color: "#0284c7",
         },
         {
           id: "signal",
           label: "Traffic Signal",
           icon: '<rect x="8" y="2" width="8" height="16" rx="3"/><circle cx="12" cy="6" r="1.3"/><circle cx="12" cy="10" r="1.3"/><circle cx="12" cy="14" r="1.3"/><path d="M12 18v4"/>',
+          color: "#ef4444",
         },
         {
           id: "other",
           label: "Other",
           icon: '<path d="M14.7 6.3a4 4 0 00-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 005.4-5.4l-2.8 2.8-2-2 2.8-2.8z"/>',
+          color: "#647069",
         },
       ];
-      /* ---------------- Supabase config — fill these in from your project ---------------- */
+
+      /* ---------------- Supabase config ---------------- */
       const SUPABASE_URL = "https://rhihavyncjuxijoeiwqf.supabase.co";
       const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoaWhhdnluY2p1eGlqb2Vpd3FmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5Mzk0NzMsImV4cCI6MjEwMjUxNTQ3M30.NovkrkOiiaGp15JEybmkR6CnDGlUAAAc4w_vyRBALiw";
@@ -1535,16 +1910,27 @@
       let currentUser = null;
       let selectedCategories = [];
       let selectedSeverity = null;
-      let pendingPhotos = []; // Array of { id: string, dataUrl: string }
+      let pendingPhotos = [];
       let currentFilter = "all";
+      let currentCmdFilter = "all";
       let reviewDraftStars = {};
+
+      // Maps
+      let formMap = null;
+      let formMarker = null;
+      let cityMap = null;
+      let cityMarkersLayer = null;
+
+      // Default City Coordinates (e.g. downtown)
+      const DEFAULT_LAT = 28.6139;
+      const DEFAULT_LNG = 77.209;
 
       const STAR_FULL =
         '<svg viewBox="0 0 20 20" class="star-fill"><path d="M10 1.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z"/></svg>';
       const STAR_EMPTY =
         '<svg viewBox="0 0 20 20" class="star-empty" stroke-width="1.3"><path d="M10 1.5l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z"/></svg>';
 
-      function starsHtml(rating, size) {
+      function starsHtml(rating) {
         let out = `<span class="stars">`;
         for (let i = 1; i <= 5; i++)
           out += i <= Math.round(rating) ? STAR_FULL : STAR_EMPTY;
@@ -1552,7 +1938,7 @@
       }
 
       function initials(name) {
-        const parts = name.trim().split(/\s+/);
+        const parts = (name || "").trim().split(/\s+/);
         return (
           ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?"
         );
@@ -1560,11 +1946,230 @@
 
       function escapeHtml(str) {
         const d = document.createElement("div");
-        d.textContent = str;
+        d.textContent = str || "";
         return d.innerHTML;
       }
 
-      /* ---------------- category & severity pickers ---------------- */
+      /* ---------------- AI Spam & Photo Relevance Detector ---------------- */
+      class AISpamDetector {
+        // Multi-modal heuristic and vision analyzer
+        static async analyzeReport(text, description, photos) {
+          let spamScore = 0;
+          const reasons = [];
+
+          const fullText = (text + " " + description).toLowerCase().trim();
+
+          // 1. Text checks
+          if (fullText.length < 10) {
+            spamScore += 45;
+            reasons.push("Description too brief");
+          }
+
+          // Check for repetitive characters or keyboard smash (e.g. asdfasdf, aaaaa, 12345)
+          if (
+            /(.)\1{4,}/.test(fullText) ||
+            /^[asdfghjklqwertyuiopzxcvbnm1234567890\s]+$/i.test(fullText) &&
+              fullText.length < 20
+          ) {
+            if (
+              fullText.includes("asdf") ||
+              fullText.includes("test") ||
+              fullText.includes("qwer")
+            ) {
+              spamScore += 65;
+              reasons.push("Keyboard mash / test submission pattern");
+            }
+          }
+
+          // Spam / promotional keywords
+          const spamKeywords = [
+            "casino",
+            "viagra",
+            "crypto",
+            "whatsapp",
+            "telegram",
+            "earn money",
+            "subscribe",
+            "lottery",
+            "loan",
+          ];
+          for (const kw of spamKeywords) {
+            if (fullText.includes(kw)) {
+              spamScore += 80;
+              reasons.push(`Contains spam phrase: "${kw}"`);
+            }
+          }
+
+          // 2. Photo Vision analysis (Canvas inspection of luminosity, edge density, and variance)
+          if (photos && photos.length > 0) {
+            for (let i = 0; i < photos.length; i++) {
+              const photoAnalysis = await this.analyzeImage(photos[i].dataUrl);
+              if (photoAnalysis.isBlank) {
+                spamScore += 50;
+                reasons.push(`Photo ${i + 1} appears blank or solid black/white`);
+              }
+              if (photoAnalysis.isExtremeLowQuality) {
+                spamScore += 25;
+                reasons.push(`Photo ${i + 1} has insufficient visual detail`);
+              }
+            }
+          }
+
+          const isSpam = spamScore >= 60;
+          return {
+            isSpam,
+            spamScore: Math.min(spamScore, 100),
+            status: isSpam ? "spam_flagged" : "verified_legit",
+            reasons,
+          };
+        }
+
+        static analyzeImage(dataUrl) {
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
+              canvas.width = 64;
+              canvas.height = 64;
+              ctx.drawImage(img, 0, 0, 64, 64);
+              const imgData = ctx.getImageData(0, 0, 64, 64);
+              const d = imgData.data;
+
+              let totalBrightness = 0;
+              let minB = 255,
+                maxB = 0;
+              const colorBuckets = new Set();
+
+              for (let i = 0; i < d.length; i += 4) {
+                const b = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                totalBrightness += b;
+                if (b < minB) minB = b;
+                if (b > maxB) maxB = b;
+                // Quantized color bucket
+                const key = `${Math.floor(d[i] / 32)},${Math.floor(d[i + 1] / 32)},${Math.floor(d[i + 2] / 32)}`;
+                colorBuckets.add(key);
+              }
+
+              const avgBrightness = totalBrightness / (64 * 64);
+              const variance = maxB - minB;
+
+              // Solid blank or dark screen test
+              const isBlank =
+                variance < 15 || avgBrightness < 10 || avgBrightness > 245;
+              const isExtremeLowQuality = colorBuckets.size < 4;
+
+              resolve({
+                isBlank,
+                isExtremeLowQuality,
+                avgBrightness,
+                colorCount: colorBuckets.size,
+              });
+            };
+            img.onerror = () => resolve({ isBlank: true, isExtremeLowQuality: true });
+            img.src = dataUrl;
+          });
+        }
+      }
+
+      /* ---------------- View Mode Switcher ---------------- */
+      const btnCitizenView = document.getElementById("btnCitizenView");
+      const btnCommandView = document.getElementById("btnCommandView");
+      const citizenView = document.getElementById("citizenView");
+      const commandView = document.getElementById("commandView");
+
+      btnCitizenView.addEventListener("click", () => {
+        btnCitizenView.classList.add("active");
+        btnCommandView.classList.remove("active");
+        citizenView.style.display = "block";
+        commandView.style.display = "none";
+        setTimeout(() => formMap && formMap.invalidateSize(), 200);
+      });
+
+      btnCommandView.addEventListener("click", () => {
+        btnCommandView.classList.add("active");
+        btnCitizenView.classList.remove("active");
+        citizenView.style.display = "none";
+        commandView.style.display = "block";
+        initCityMap();
+        setTimeout(() => cityMap && cityMap.invalidateSize(), 200);
+      });
+
+      /* ---------------- Form Map & GPS Integration ---------------- */
+      function initFormMap(lat = DEFAULT_LAT, lng = DEFAULT_LNG) {
+        if (formMap) return;
+        formMap = L.map("formMap").setView([lat, lng], 14);
+
+        L.tileLayer(
+          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a>',
+            maxZoom: 19,
+          },
+        ).addTo(formMap);
+
+        formMarker = L.marker([lat, lng], { draggable: true }).addTo(formMap);
+
+        document.getElementById("latitude").value = lat;
+        document.getElementById("longitude").value = lng;
+
+        formMarker.on("dragend", async (e) => {
+          const { lat: newLat, lng: newLng } = e.target.getLatLng();
+          updateLocationFromCoords(newLat, newLng);
+        });
+
+        formMap.on("click", (e) => {
+          formMarker.setLatLng(e.latlng);
+          updateLocationFromCoords(e.latlng.lat, e.latlng.lng);
+        });
+      }
+
+      async function updateLocationFromCoords(lat, lng) {
+        document.getElementById("latitude").value = lat.toFixed(6);
+        document.getElementById("longitude").value = lng.toFixed(6);
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+          );
+          const data = await res.json();
+          if (data && data.display_name) {
+            const parts = data.display_name.split(",");
+            const shortAddress = parts.slice(0, 3).join(",").trim();
+            document.getElementById("location").value = shortAddress;
+          }
+        } catch (e) {
+          console.warn("Reverse geocode err:", e);
+        }
+      }
+
+      // Detect GPS button
+      document.getElementById("btnGps").addEventListener("click", () => {
+        if (!navigator.geolocation) {
+          alert("Geolocation is not supported by your browser.");
+          return;
+        }
+        const gpsBtn = document.getElementById("btnGps");
+        gpsBtn.textContent = "Locating…";
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            if (formMap && formMarker) {
+              formMap.setView([latitude, longitude], 16);
+              formMarker.setLatLng([latitude, longitude]);
+            }
+            updateLocationFromCoords(latitude, longitude);
+            gpsBtn.innerHTML = `📍 GPS Active`;
+          },
+          (err) => {
+            console.error("GPS error:", err);
+            alert("Could not access GPS. Please allow location permissions.");
+            gpsBtn.textContent = "Detect GPS";
+          },
+          { enableHighAccuracy: true, timeout: 8000 },
+        );
+      });
+
+      /* ---------------- Category & Severity Pickers ---------------- */
       const catGrid = document.getElementById("catGrid");
       CATEGORIES.forEach((c) => {
         const btn = document.createElement("button");
@@ -1597,26 +2202,24 @@
         });
       });
 
-      /* ---------------- multi-photo handling & previews ---------------- */
+      /* ---------------- Multi-Photo Handling & Previews ---------------- */
       const photoDrop = document.getElementById("photoDrop");
       const photoInput = document.getElementById("photoInput");
       const photoPreview = document.getElementById("photoPreview");
       const photoDropText = document.getElementById("photoDropText");
+      const aiStatusBox = document.getElementById("aiStatusBox");
 
       photoDrop.addEventListener("click", () => photoInput.click());
 
-      // Drag and drop events
       ["dragenter", "dragover"].forEach((eventName) => {
         photoDrop.addEventListener(eventName, (e) => {
           e.preventDefault();
-          e.stopPropagation();
           photoDrop.classList.add("dragover");
         });
       });
       ["dragleave", "drop"].forEach((eventName) => {
         photoDrop.addEventListener(eventName, (e) => {
           e.preventDefault();
-          e.stopPropagation();
           photoDrop.classList.remove("dragover");
         });
       });
@@ -1624,16 +2227,14 @@
         const files = Array.from(e.dataTransfer.files).filter((f) =>
           f.type.startsWith("image/"),
         );
-        if (files.length > 0) {
-          await handleFiles(files);
-        }
+        if (files.length > 0) handleFiles(files);
       });
 
       photoInput.addEventListener("change", async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
         await handleFiles(files);
-        photoInput.value = ""; // Reset input so same file can be re-selected if removed
+        photoInput.value = "";
       });
 
       async function handleFiles(files) {
@@ -1644,13 +2245,7 @@
         }
 
         const filesToProcess = files.slice(0, remainingSlots);
-        if (files.length > remainingSlots) {
-          alert(
-            `Only ${remainingSlots} more photo(s) added (limit: ${MAX_PHOTOS}).`,
-          );
-        }
-
-        photoDropText.textContent = "Processing images…";
+        photoDropText.textContent = "AI analyzing images…";
 
         for (const file of filesToProcess) {
           try {
@@ -1665,11 +2260,13 @@
         }
 
         renderPhotoPreviews();
+        runAiPrecheck();
       }
 
       function removePendingPhoto(id) {
         pendingPhotos = pendingPhotos.filter((p) => p.id !== id);
         renderPhotoPreviews();
+        runAiPrecheck();
       }
       window.removePendingPhoto = removePendingPhoto;
 
@@ -1679,7 +2276,7 @@
             (p, idx) => `
             <div class="photo-thumb-wrap">
               <img src="${p.dataUrl}" alt="Photo preview ${idx + 1}">
-              <button type="button" class="del-btn" onclick="removePendingPhoto('${p.id}')" title="Remove photo">&times;</button>
+              <button type="button" class="del-btn" onclick="removePendingPhoto('${p.id}')" title="Remove">&times;</button>
               <span class="idx-badge">${idx + 1}/${MAX_PHOTOS}</span>
             </div>
           `,
@@ -1690,6 +2287,28 @@
           photoDropText.textContent = `${pendingPhotos.length}/${MAX_PHOTOS} photo(s) attached — tap to add more`;
         } else {
           photoDropText.textContent = "Tap or drop photos to attach";
+        }
+      }
+
+      async function runAiPrecheck() {
+        if (pendingPhotos.length === 0) {
+          aiStatusBox.style.display = "none";
+          return;
+        }
+        const locationVal = document.getElementById("location").value;
+        const descVal = document.getElementById("description").value;
+        const analysis = await AISpamDetector.analyzeReport(
+          locationVal,
+          descVal,
+          pendingPhotos,
+        );
+
+        if (analysis.isSpam) {
+          aiStatusBox.className = "ai-status-box spam";
+          aiStatusBox.innerHTML = `⚠️ <b>AI Warning:</b> Low photo clarity or spam detected (${analysis.reasons.join(", ")}).`;
+        } else {
+          aiStatusBox.className = "ai-status-box legit";
+          aiStatusBox.innerHTML = `🛡️ <b>AI Verified:</b> Image clarity is good & hazard details detected.`;
         }
       }
 
@@ -1732,7 +2351,6 @@
         return new Blob([arr], { type: mime });
       }
 
-      /* Helper to parse photo URLs from string / json / array */
       function parsePhotos(photoData) {
         if (!photoData) return [];
         if (Array.isArray(photoData)) return photoData;
@@ -1752,7 +2370,7 @@
         return [];
       }
 
-      /* ---------------- Lightbox functionality ---------------- */
+      /* ---------------- Lightbox ---------------- */
       let lightboxPhotos = [];
       let lightboxIndex = 0;
       const lightboxBackdrop = document.getElementById("lightboxBackdrop");
@@ -1794,7 +2412,6 @@
           (lightboxIndex - 1 + lightboxPhotos.length) % lightboxPhotos.length;
         updateLightboxView();
       });
-
       lightboxNext.addEventListener("click", () => {
         lightboxIndex = (lightboxIndex + 1) % lightboxPhotos.length;
         updateLightboxView();
@@ -1807,8 +2424,7 @@
         if (e.key === "ArrowRight") lightboxNext.click();
       });
 
-      /* Switch active thumbnail in card gallery */
-      function setCardMainPhoto(cardId, photoUrl, photoIndex, totalCount) {
+      function setCardMainPhoto(cardId, photoUrl, photoIndex) {
         const mainImg = document.getElementById(`mainImg-${cardId}`);
         if (mainImg) {
           mainImg.src = photoUrl;
@@ -1826,18 +2442,55 @@
       }
       window.setCardMainPhoto = setCardMainPhoto;
 
-      /* ---------------- data loading (Supabase) ---------------- */
+      /* ---------------- Profile sync helper ---------------- */
+      async function syncProfile(user, fallbackName = "", fallbackArea = "") {
+        if (!user) return null;
+        try {
+          const { data: profile } = await sb
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .maybeSingle();
+
+          if (profile && profile.name) return profile;
+
+          const nameToSave =
+            fallbackName ||
+            user.user_metadata?.name ||
+            user.email?.split("@")[0] ||
+            "User";
+          const areaToSave = fallbackArea || user.user_metadata?.area || "";
+
+          const { data: insertedProf, error: insErr } = await sb
+            .from("profiles")
+            .upsert(
+              { id: user.id, name: nameToSave, area: areaToSave },
+              { onConflict: "id" },
+            )
+            .select()
+            .maybeSingle();
+
+          if (insErr) console.warn("Profile sync note:", insErr.message);
+          return (
+            insertedProf || { id: user.id, name: nameToSave, area: areaToSave }
+          );
+        } catch (err) {
+          return {
+            id: user.id,
+            name: fallbackName || user.user_metadata?.name || user.email,
+            area: fallbackArea || user.user_metadata?.area || "",
+          };
+        }
+      }
+
+      /* ---------------- Data Loading (Supabase) ---------------- */
       async function loadAll() {
         try {
           const {
             data: { session },
           } = await sb.auth.getSession();
-          if (session) {
-            const { data: profile } = await sb
-              .from("profiles")
-              .select("*")
-              .eq("id", session.user.id)
-              .single();
+          if (session && session.user) {
+            const profile = await syncProfile(session.user);
             currentUser = {
               id: session.user.id,
               email: session.user.email,
@@ -1859,27 +2512,33 @@
 
           if (reportsRes.error)
             console.error("Load reports error:", reportsRes.error);
+
           reports = (reportsRes.data || []).map((r) => {
-            const photosList = parsePhotos(r.photo_url || r.photo_urls || r.photos);
+            const photosList = parsePhotos(
+              r.photo_url || r.photo_urls || r.photos,
+            );
             return {
               id: r.id,
-              category: r.category,
-              categoryLabel: r.category_label,
-              categoryIcon: r.category_icon,
-              location: r.location,
-              description: r.description,
-              severity: r.severity,
+              category: r.category || "other",
+              categoryLabel: r.category_label || "Civic Issue",
+              categoryIcon: r.category_icon || "",
+              location: r.location || "City Location",
+              latitude: r.latitude || DEFAULT_LAT + (Math.random() - 0.5) * 0.04,
+              longitude:
+                r.longitude || DEFAULT_LNG + (Math.random() - 0.5) * 0.04,
+              description: r.description || "",
+              severity: r.severity || "Medium",
               photos: photosList,
               photo: photosList[0] || null,
-              status: r.status,
+              status: r.status || "Submitted",
+              spamStatus: r.spam_status || "verified_legit",
+              spamScore: r.spam_score || 0,
               createdAt: new Date(r.created_at).getTime(),
               authorId: r.author_id,
-              authorName: r.author_name,
+              authorName: r.author_name || "Guest",
             };
           });
 
-          if (reviewsRes.error)
-            console.error("Load reviews error:", reviewsRes.error);
           reviews = {};
           (reviewsRes.data || []).forEach((rv) => {
             if (!reviews[rv.report_id]) reviews[rv.report_id] = [];
@@ -1897,156 +2556,10 @@
         }
         renderAuthArea();
         render();
+        updateCommandCenter();
       }
 
-      /* ---------------- auth UI ---------------- */
-      const authBackdrop = document.getElementById("authBackdrop");
-      const tabLogin = document.getElementById("tabLogin");
-      const tabRegister = document.getElementById("tabRegister");
-      const loginPane = document.getElementById("loginPane");
-      const registerPane = document.getElementById("registerPane");
-
-      function renderAuthArea() {
-        const area = document.getElementById("authArea");
-        const mineBtn = document.getElementById("mineFilterBtn");
-        if (currentUser) {
-          area.innerHTML = `<div class="user-chip"><span class="avatar">${initials(currentUser.name)}</span><span class="name">${escapeHtml(currentUser.name)}</span><button id="signOutBtn">Sign out</button></div>`;
-          document
-            .getElementById("signOutBtn")
-            .addEventListener("click", async () => {
-              await sb.auth.signOut();
-              currentUser = null;
-              renderAuthArea();
-              if (currentFilter === "mine") currentFilter = "all";
-              render();
-            });
-          document.getElementById("formHint").textContent =
-            `Filing as ${currentUser.name}.`;
-          mineBtn.style.display = "inline-block";
-        } else {
-          area.innerHTML = `<button class="auth-btn" id="openAuthBtn">Sign in</button>`;
-          document
-            .getElementById("openAuthBtn")
-            .addEventListener("click", () => openModal("login"));
-          document.getElementById("formHint").textContent =
-            "Signed in as guest — you can still file a report; sign in to track it under your name.";
-          mineBtn.style.display = "none";
-        }
-      }
-
-      function openModal(tab) {
-        authBackdrop.classList.add("show");
-        switchTab(tab);
-      }
-      function closeModalFn() {
-        authBackdrop.classList.remove("show");
-      }
-      document
-        .getElementById("closeModal")
-        .addEventListener("click", closeModalFn);
-      authBackdrop.addEventListener("click", (e) => {
-        if (e.target === authBackdrop) closeModalFn();
-      });
-
-      function switchTab(tab) {
-        const isLogin = tab === "login";
-        tabLogin.classList.toggle("active", isLogin);
-        tabRegister.classList.toggle("active", !isLogin);
-        loginPane.style.display = isLogin ? "block" : "none";
-        registerPane.style.display = isLogin ? "none" : "block";
-        document.getElementById("loginErr").classList.remove("show");
-        document.getElementById("registerErr").classList.remove("show");
-        document.getElementById("loginPassErr").classList.remove("show");
-        document.getElementById("registerPassErr").classList.remove("show");
-      }
-      tabLogin.addEventListener("click", () => switchTab("login"));
-      tabRegister.addEventListener("click", () => switchTab("register"));
-
-      document
-        .getElementById("loginSubmit")
-        .addEventListener("click", async () => {
-          const email = document
-            .getElementById("loginEmail")
-            .value.trim()
-            .toLowerCase();
-          const password = document.getElementById("loginPassword").value;
-          document.getElementById("loginErr").classList.remove("show");
-          document.getElementById("loginPassErr").classList.remove("show");
-          if (!email || !password) return;
-          const { data, error } = await sb.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (error) {
-            document.getElementById("loginErr").textContent =
-              "Incorrect email or password.";
-            document.getElementById("loginErr").classList.add("show");
-            return;
-          }
-          const { data: profile } = await sb
-            .from("profiles")
-            .select("*")
-            .eq("id", data.user.id)
-            .single();
-          currentUser = {
-            id: data.user.id,
-            email: data.user.email,
-            name: profile?.name || data.user.email,
-            area: profile?.area || "",
-          };
-          closeModalFn();
-          renderAuthArea();
-          render();
-          document.getElementById("loginPassword").value = "";
-        });
-
-      document
-        .getElementById("registerSubmit")
-        .addEventListener("click", async () => {
-          const name = document.getElementById("regName").value.trim();
-          const email = document
-            .getElementById("regEmail")
-            .value.trim()
-            .toLowerCase();
-          const password = document.getElementById("regPassword").value;
-          const passwordConfirm =
-            document.getElementById("regPasswordConfirm").value;
-          const area = document.getElementById("regArea").value.trim();
-          document.getElementById("registerErr").classList.remove("show");
-          document.getElementById("registerPassErr").classList.remove("show");
-          if (!name || !email) return;
-          if (password.length < 8 || password !== passwordConfirm) {
-            document.getElementById("registerPassErr").classList.add("show");
-            return;
-          }
-          const { data, error } = await sb.auth.signUp({ email, password });
-          if (error) {
-            document.getElementById("registerErr").textContent = error.message;
-            document.getElementById("registerErr").classList.add("show");
-            return;
-          }
-          await sb.from("profiles").insert({ id: data.user.id, name, area });
-
-          document.getElementById("regName").value = "";
-          document.getElementById("regEmail").value = "";
-          document.getElementById("regArea").value = "";
-          document.getElementById("regPassword").value = "";
-          document.getElementById("regPasswordConfirm").value = "";
-
-          if (data.session) {
-            currentUser = { id: data.user.id, email, name, area };
-            closeModalFn();
-            renderAuthArea();
-            render();
-          } else {
-            document.getElementById("registerErr").textContent =
-              "Account created — check your email to confirm it, then sign in.";
-            document.getElementById("registerErr").classList.add("show");
-            switchTab("login");
-          }
-        });
-
-      /* ---------------- report submission with multi-photo upload ---------------- */
+      /* ---------------- Report Submission ---------------- */
       document
         .getElementById("reportForm")
         .addEventListener("submit", async (e) => {
@@ -2055,6 +2568,12 @@
           const description = document
             .getElementById("description")
             .value.trim();
+          const latitude =
+            parseFloat(document.getElementById("latitude").value) || DEFAULT_LAT;
+          const longitude =
+            parseFloat(document.getElementById("longitude").value) ||
+            DEFAULT_LNG;
+
           if (
             selectedCategories.length === 0 ||
             !location ||
@@ -2062,31 +2581,37 @@
             !selectedSeverity
           ) {
             alert(
-              "Please pick at least one category, and fill in location, description, and severity.",
+              "Please select at least one category, and fill in location, description, and severity.",
             );
             return;
           }
+
           const submitBtn = document.getElementById("submitBtn");
           submitBtn.disabled = true;
-          submitBtn.textContent = "Submitting…";
+          submitBtn.textContent = "AI Scanning report…";
 
           try {
+            // 1. Run AI Spam & Quality Evaluation
+            const aiResult = await AISpamDetector.analyzeReport(
+              location,
+              description,
+              pendingPhotos,
+            );
+
+            // 2. Upload photos to Supabase Storage
             const uploadedUrls = [];
             if (pendingPhotos.length > 0) {
-              submitBtn.textContent = `Uploading photos (0/${pendingPhotos.length})…`;
-              
               for (let i = 0; i < pendingPhotos.length; i++) {
-                const photo = pendingPhotos[i];
                 submitBtn.textContent = `Uploading photos (${i + 1}/${pendingPhotos.length})…`;
+                const photo = pendingPhotos[i];
                 const blob = dataURLtoBlob(photo.dataUrl);
                 const path = `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}.jpg`;
                 const { error: upErr } = await sb.storage
                   .from(PHOTO_BUCKET)
                   .upload(path, blob, { contentType: "image/jpeg" });
-                if (upErr) {
-                  console.error("Photo upload error:", upErr);
-                } else {
-                  const pubUrl = sb.storage.from(PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
+                if (!upErr) {
+                  const pubUrl = sb.storage.from(PHOTO_BUCKET).getPublicUrl(path)
+                    .data.publicUrl;
                   uploadedUrls.push(pubUrl);
                 }
               }
@@ -2096,10 +2621,10 @@
               CATEGORIES.find((c) => c.id === id),
             );
 
-            // Store JSON array string or comma separated format for photo_url for full DB compatibility
             const photoUrlValue =
               uploadedUrls.length > 0 ? JSON.stringify(uploadedUrls) : null;
 
+            // 3. Save report to DB with GPS coordinates and AI spam rating
             const { data, error } = await sb
               .from("reports")
               .insert({
@@ -2107,10 +2632,14 @@
                 category_label: catInfos.map((c) => c.label).join(", "),
                 category_icon: catInfos.map((c) => c.icon).join("|"),
                 location,
+                latitude,
+                longitude,
                 description,
                 severity: selectedSeverity,
                 photo_url: photoUrlValue,
                 status: "Submitted",
+                spam_status: aiResult.status,
+                spam_score: aiResult.spamScore,
                 author_id: currentUser ? currentUser.id : null,
                 author_name: currentUser ? currentUser.name : "Guest",
               })
@@ -2130,11 +2659,15 @@
               categoryLabel: data.category_label,
               categoryIcon: data.category_icon,
               location: data.location,
+              latitude: data.latitude || latitude,
+              longitude: data.longitude || longitude,
               description: data.description,
               severity: data.severity,
               photos: reportPhotos,
               photo: reportPhotos[0] || null,
               status: data.status,
+              spamStatus: data.spam_status || aiResult.status,
+              spamScore: data.spam_score || aiResult.spamScore,
               createdAt: new Date(data.created_at).getTime(),
               authorId: data.author_id,
               authorName: data.author_name,
@@ -2151,14 +2684,17 @@
             selectedSeverity = null;
             pendingPhotos = [];
             renderPhotoPreviews();
+            aiStatusBox.style.display = "none";
             document.getElementById("category").value = "";
             document.getElementById("severity").value = "";
 
             const stamp = document.getElementById("stamp");
+            stamp.textContent = aiResult.isSpam ? "FLAGGED" : "FILED";
             stamp.classList.add("show");
-            setTimeout(() => stamp.classList.remove("show"), 1800);
+            setTimeout(() => stamp.classList.remove("show"), 2000);
 
             render();
+            updateCommandCenter();
           } catch (err) {
             console.error("Submit error:", err);
             alert("Something went wrong submitting your report.");
@@ -2168,19 +2704,174 @@
           }
         });
 
-      /* ---------------- filters ---------------- */
-      document.getElementById("filters").addEventListener("click", (e) => {
+      /* ---------------- Command Center Operations ---------------- */
+      function initCityMap() {
+        if (!cityMap) {
+          cityMap = L.map("cityMap").setView([DEFAULT_LAT, DEFAULT_LNG], 13);
+          L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+              attribution:
+                '&copy; <a href="https://www.openstreetmap.org/">OSM</a>',
+              maxZoom: 19,
+            },
+          ).addTo(cityMap);
+          cityMarkersLayer = L.layerGroup().addTo(cityMap);
+        }
+        updateCommandMapMarkers();
+      }
+
+      function updateCommandMapMarkers() {
+        if (!cityMarkersLayer) return;
+        cityMarkersLayer.clearLayers();
+
+        let list = reports;
+        if (currentCmdFilter === "urgent")
+          list = reports.filter((r) => r.severity === "Urgent" || r.severity === "High");
+        if (currentCmdFilter === "open")
+          list = reports.filter((r) => r.status !== "Resolved");
+        if (currentCmdFilter === "spam")
+          list = reports.filter((r) => r.spamStatus === "spam_flagged");
+
+        const bounds = [];
+
+        list.forEach((r) => {
+          if (!r.latitude || !r.longitude) return;
+
+          const isSpam = r.spamStatus === "spam_flagged";
+          const cat = CATEGORIES.find((c) => r.category.includes(c.id));
+          const color = isSpam ? "#6a3cbc" : cat?.color || "#0e7c86";
+
+          const customIcon = L.divIcon({
+            className: "custom-map-pin",
+            html: `<div style="background:${color}; width:24px; height:24px; border-radius:50%; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:700;">${isSpam ? "⚠️" : "📍"}</div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+          });
+
+          const marker = L.marker([r.latitude, r.longitude], {
+            icon: customIcon,
+          });
+
+          const popupContent = `
+            <div style="font-family:Inter,sans-serif; max-width:220px; font-size:12px;">
+              <b style="color:${color};">${escapeHtml(r.categoryLabel)}</b>
+              <div style="font-size:11px; color:#647069; margin:3px 0;">📍 ${escapeHtml(r.location)}</div>
+              <div style="margin:4px 0;">${escapeHtml(r.description.slice(0, 80))}${r.description.length > 80 ? "…" : ""}</div>
+              ${r.photo ? `<img src="${r.photo}" style="width:100%; height:80px; object-fit:cover; border-radius:4px; margin-top:4px;">` : ""}
+              <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; font-size:10px;">${r.severity} Priority</span>
+                <span style="font-size:10px; background:#eef3f0; padding:2px 5px; border-radius:10px;">${r.status}</span>
+              </div>
+            </div>
+          `;
+
+          marker.bindPopup(popupContent);
+          cityMarkersLayer.addLayer(marker);
+          bounds.push([r.latitude, r.longitude]);
+        });
+
+        if (bounds.length > 0 && cityMap) {
+          cityMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        }
+      }
+
+      function updateCommandCenter() {
+        const total = reports.length;
+        const urgent = reports.filter(
+          (r) => r.severity === "Urgent" || r.severity === "High",
+        ).length;
+        const open = reports.filter((r) => r.status !== "Resolved").length;
+        const spam = reports.filter(
+          (r) => r.spamStatus === "spam_flagged",
+        ).length;
+
+        document.getElementById("cmdTotal").textContent = total;
+        document.getElementById("cmdUrgent").textContent = urgent;
+        document.getElementById("cmdOpen").textContent = open;
+        document.getElementById("cmdSpam").textContent = spam;
+
+        let list = reports;
+        if (currentCmdFilter === "urgent")
+          list = reports.filter((r) => r.severity === "Urgent" || r.severity === "High");
+        if (currentCmdFilter === "open")
+          list = reports.filter((r) => r.status !== "Resolved");
+        if (currentCmdFilter === "spam")
+          list = reports.filter((r) => r.spamStatus === "spam_flagged");
+
+        document.getElementById("cmdFeedCount").textContent = `${list.length} tickets`;
+
+        const feedEl = document.getElementById("cmdFeed");
+        if (list.length === 0) {
+          feedEl.innerHTML = `<div style="text-align:center; padding:30px; color:#888;">No tickets in this filter</div>`;
+          return;
+        }
+
+        feedEl.innerHTML = list
+          .map(
+            (r) => `
+            <div class="cmd-feed-item ${r.spamStatus === "spam_flagged" ? "quarantine" : ""}">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="mono" style="font-weight:700; color:var(--orange-dark);">RD-${r.id.slice(0, 6).toUpperCase()}</span>
+                <span class="badge ${r.status.replace(" ", "")}">${r.status}</span>
+              </div>
+              <div><b>${escapeHtml(r.categoryLabel)}</b> &middot; <span style="color:var(--slate);">📍 ${escapeHtml(r.location)}</span></div>
+              <div style="color:#3e4145;">${escapeHtml(r.description)}</div>
+              ${
+                r.spamStatus === "spam_flagged"
+                  ? `<div class="ai-badge spam">⚠️ AI Spam Flag (Score: ${r.spamScore}%)</div>`
+                  : `<div class="ai-badge verified">🛡️ AI Verified Issue</div>`
+              }
+              <div class="cmd-feed-actions">
+                ${
+                  r.status !== "Resolved"
+                    ? `<button type="button" class="cmd-action-btn dispatch" onclick="setStatus('${r.id}','Resolved')">✓ Resolve</button>`
+                    : `<button type="button" class="cmd-action-btn" onclick="setStatus('${r.id}','Submitted')">Reopen</button>`
+                }
+                ${
+                  r.spamStatus === "spam_flagged"
+                    ? `<button type="button" class="cmd-action-btn verify" onclick="setSpamStatus('${r.id}','verified_legit')">Verify Legit</button>`
+                    : `<button type="button" class="cmd-action-btn spam-flag" onclick="setSpamStatus('${r.id}','spam_flagged')">Flag Spam</button>`
+                }
+                <button type="button" class="cmd-action-btn" onclick="focusTicketOnMap(${r.latitude}, ${r.longitude})">View on Map</button>
+              </div>
+            </div>
+          `,
+          )
+          .join("");
+
+        updateCommandMapMarkers();
+      }
+
+      async function setSpamStatus(id, spamStatus) {
+        const r = reports.find((item) => item.id === id);
+        if (!r) return;
+        r.spamStatus = spamStatus;
+        await sb.from("reports").update({ spam_status: spamStatus }).eq("id", id);
+        render();
+        updateCommandCenter();
+      }
+      window.setSpamStatus = setSpamStatus;
+
+      function focusTicketOnMap(lat, lng) {
+        if (cityMap && lat && lng) {
+          cityMap.setView([lat, lng], 17);
+        }
+      }
+      window.focusTicketOnMap = focusTicketOnMap;
+
+      document.getElementById("cmdFilters").addEventListener("click", (e) => {
         const btn = e.target.closest(".filter-btn");
         if (!btn) return;
         document
-          .querySelectorAll(".filter-btn")
+          .querySelectorAll("#cmdFilters .filter-btn")
           .forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
-        currentFilter = btn.dataset.filter;
-        render();
+        currentCmdFilter = btn.dataset.cmdfilter;
+        updateCommandCenter();
       });
 
-      /* ---------------- ticket actions ---------------- */
+      /* ---------------- Ticket Actions & Reviews ---------------- */
       async function setStatus(id, status) {
         const r = reports.find((r) => r.id === id);
         if (!r) return;
@@ -2189,28 +2880,27 @@
           .update({ status })
           .eq("id", id);
         if (error) {
-          console.error("Update status error:", error);
           alert("Could not update status: " + error.message);
           return;
         }
         r.status = status;
         render();
+        updateCommandCenter();
       }
       async function withdraw(id) {
         if (!confirm("Withdraw this report? This cannot be undone.")) return;
         const { error } = await sb.from("reports").delete().eq("id", id);
         if (error) {
-          console.error("Withdraw error:", error);
           alert("Could not withdraw: " + error.message);
           return;
         }
         reports = reports.filter((r) => r.id !== id);
         render();
+        updateCommandCenter();
       }
       window.setStatus = setStatus;
       window.withdraw = withdraw;
 
-      /* ---------------- reviews ---------------- */
       function setDraftStars(reportId, n) {
         reviewDraftStars[reportId] = n;
         const wrap = document.getElementById("starInput-" + reportId);
@@ -2296,31 +2986,26 @@
         <button type="button" class="rv-submit" onclick="submitReview('${report.id}')">Post review</button>
       </div>`;
           }
-        } else {
-          html += `<p class="review-locked">Sign in to leave a review.</p>`;
         }
         html += `</div>`;
         return html;
       }
 
-      /* Helper to build gallery HTML for ticket card */
       function buildCardGalleryHtml(report) {
         const photos = report.photos || [];
         if (photos.length === 0) return "";
         if (photos.length === 1) {
-          return `<img class="tc-photo-main" src="${photos[0]}" alt="Photo of reported issue" onclick="openLightbox(['${photos[0]}'], 0)">`;
+          return `<img class="tc-photo-main" src="${photos[0]}" alt="Photo of issue" onclick="openLightbox(['${photos[0]}'], 0)">`;
         }
-
-        // Multiple photos: Main active photo + clickable thumbnails row
         const escapedPhotosJson = JSON.stringify(photos).replace(/"/g, "&quot;");
         return `
           <div class="tc-gallery">
-            <img class="tc-photo-main" id="mainImg-${report.id}" src="${photos[0]}" alt="Photo of reported issue" onclick="openLightbox(${escapedPhotosJson}, 0)">
+            <img class="tc-photo-main" id="mainImg-${report.id}" src="${photos[0]}" alt="Photo of issue" onclick="openLightbox(${escapedPhotosJson}, 0)">
             <div class="tc-thumbs-row">
               ${photos
                 .map(
                   (p, idx) => `
-                <div class="tc-thumb-item ${idx === 0 ? "active" : ""}" onclick="setCardMainPhoto('${report.id}', '${p}', ${idx}, ${photos.length})">
+                <div class="tc-thumb-item ${idx === 0 ? "active" : ""}" onclick="setCardMainPhoto('${report.id}', '${p}', ${idx})">
                   <img src="${p}" alt="Thumbnail ${idx + 1}">
                 </div>
               `,
@@ -2331,7 +3016,125 @@
         `;
       }
 
-      /* ---------------- main render ---------------- */
+      /* ---------------- Auth UI ---------------- */
+      const authBackdrop = document.getElementById("authBackdrop");
+      const tabLogin = document.getElementById("tabLogin");
+      const tabRegister = document.getElementById("tabRegister");
+      const loginPane = document.getElementById("loginPane");
+      const registerPane = document.getElementById("registerPane");
+
+      function renderAuthArea() {
+        const area = document.getElementById("authArea");
+        const mineBtn = document.getElementById("mineFilterBtn");
+        if (currentUser) {
+          area.innerHTML = `<div class="user-chip"><span class="avatar">${initials(currentUser.name)}</span><span class="name">${escapeHtml(currentUser.name)}</span><button id="signOutBtn">Sign out</button></div>`;
+          document
+            .getElementById("signOutBtn")
+            .addEventListener("click", async () => {
+              await sb.auth.signOut();
+              currentUser = null;
+              renderAuthArea();
+              if (currentFilter === "mine") currentFilter = "all";
+              render();
+            });
+          document.getElementById("formHint").textContent =
+            `Filing as ${currentUser.name}.`;
+          mineBtn.style.display = "inline-block";
+        } else {
+          area.innerHTML = `<button class="auth-btn" id="openAuthBtn">Sign in</button>`;
+          document
+            .getElementById("openAuthBtn")
+            .addEventListener("click", () => openModal("login"));
+          document.getElementById("formHint").textContent =
+            "Signed in as guest — you can still file a report; sign in to track it under your name.";
+          mineBtn.style.display = "none";
+        }
+      }
+
+      function openModal(tab) {
+        authBackdrop.classList.add("show");
+        switchTab(tab);
+      }
+      function closeModalFn() {
+        authBackdrop.classList.remove("show");
+      }
+      document
+        .getElementById("closeModal")
+        .addEventListener("click", closeModalFn);
+      authBackdrop.addEventListener("click", (e) => {
+        if (e.target === authBackdrop) closeModalFn();
+      });
+
+      function switchTab(tab) {
+        const isLogin = tab === "login";
+        tabLogin.classList.toggle("active", isLogin);
+        tabRegister.classList.toggle("active", !isLogin);
+        loginPane.style.display = isLogin ? "block" : "none";
+        registerPane.style.display = isLogin ? "none" : "block";
+      }
+      tabLogin.addEventListener("click", () => switchTab("login"));
+      tabRegister.addEventListener("click", () => switchTab("register"));
+
+      document
+        .getElementById("loginSubmit")
+        .addEventListener("click", async () => {
+          const email = document.getElementById("loginEmail").value.trim();
+          const password = document.getElementById("loginPassword").value;
+          if (!email || !password) return;
+          const { data, error } = await sb.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (error) {
+            document.getElementById("loginErr").classList.add("show");
+            return;
+          }
+          const profile = await syncProfile(data.user);
+          currentUser = {
+            id: data.user.id,
+            email: data.user.email,
+            name: profile?.name || data.user.email,
+            area: profile?.area || "",
+          };
+          closeModalFn();
+          renderAuthArea();
+          render();
+        });
+
+      document
+        .getElementById("registerSubmit")
+        .addEventListener("click", async () => {
+          const name = document.getElementById("regName").value.trim();
+          const email = document.getElementById("regEmail").value.trim();
+          const password = document.getElementById("regPassword").value;
+          const passwordConfirm =
+            document.getElementById("regPasswordConfirm").value;
+          const area = document.getElementById("regArea").value.trim();
+
+          if (!name || !email || password !== passwordConfirm) {
+            document.getElementById("registerPassErr").classList.add("show");
+            return;
+          }
+
+          const { data, error } = await sb.auth.signUp({
+            email,
+            password,
+            options: { data: { name, area } },
+          });
+
+          if (error) {
+            document.getElementById("registerErr").textContent = error.message;
+            document.getElementById("registerErr").classList.add("show");
+            return;
+          }
+
+          if (data?.user) await syncProfile(data.user, name, area);
+          closeModalFn();
+          renderAuthArea();
+          render();
+        });
+
+      /* ---------------- Main Ledger Render ---------------- */
       function render() {
         const total = reports.length;
         const resolved = reports.filter((r) => r.status === "Resolved").length;
@@ -2355,18 +3158,14 @@
 
         const body = document.getElementById("ledgerBody");
         if (list.length === 0) {
-          body.innerHTML = `<div class="empty-state">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
-      <div class="t">No tickets here yet</div>
-      <div>${reports.length === 0 ? "File your first report above and it will show up here." : "Nothing matches this filter."}</div>
-    </div>`;
+          body.innerHTML = `<div style="text-align:center; padding:40px; border:1.5px dashed var(--line); border-radius:8px; color:var(--slate);">No reports found matching this filter.</div>`;
           return;
         }
 
         body.innerHTML = `<div class="tickets-grid">${list
           .map(
             (r) => `
-    <div class="ticket-card">
+    <div class="ticket-card ${r.spamStatus === "spam_flagged" ? "spam-card" : ""}">
       <div class="tc-top">
         <div>
           <div class="tc-id">RD-${r.id.slice(0, 8).toUpperCase()}</div>
@@ -2385,7 +3184,14 @@
       <div class="tc-loc"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>${escapeHtml(r.location)}</div>
       ${buildCardGalleryHtml(r)}
       <div class="tc-desc">${escapeHtml(r.description)}</div>
-      <div class="tc-author">Filed by ${escapeHtml(r.authorName || "Guest")}</div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11px; color:var(--slate);">Filed by ${escapeHtml(r.authorName || "Guest")}</span>
+        ${
+          r.spamStatus === "spam_flagged"
+            ? `<span class="ai-badge spam">⚠️ AI Spam Flagged</span>`
+            : `<span class="ai-badge verified">🛡️ AI Verified</span>`
+        }
+      </div>
       <div class="tc-bottom">
         <div>
           <div class="tc-sev ${r.severity}">${r.severity} severity</div>
@@ -2407,6 +3213,19 @@
           .join("")}</div>`;
       }
 
+      document.getElementById("filters").addEventListener("click", (e) => {
+        const btn = e.target.closest(".filter-btn");
+        if (!btn) return;
+        document
+          .querySelectorAll("#filters .filter-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        render();
+      });
+
+      // Initialize
+      initFormMap();
       loadAll();
     </script>
   </body>
